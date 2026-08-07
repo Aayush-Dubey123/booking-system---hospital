@@ -15,3 +15,5 @@ class User(Model):
     model_config = {
         "collection": "users",
     }
+
+    

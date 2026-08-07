@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
-
+from core.apis.routes.doctor_router import doctor_router
 from core.apis.routes.auth_router import auth_router
 from core.apis.routes.appointment_router import appointment_router
 from core.apis.routes.my_appointments_router import my_appointments_router
@@ -13,7 +13,6 @@ from core.database.database import (
     connect_to_mongo,
     close_mongo_connection,
 )
-
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -30,6 +29,11 @@ app = FastAPI(
     redoc_url="/documentation",
 )
 
+app.include_router(
+    doctor_router,
+    tags=["Doctor"],
+)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -43,7 +47,7 @@ app.include_router(appointment_router, tags=["Appointments"])
 app.include_router(my_appointments_router, tags=["My Appointments"])
 app.include_router(schedule_router, tags=["Doctor Schedule"])
 app.include_router(dashboard_router, tags=["Dashboard"])
-
+app.include_router(doctor_router, tags=["Doctor"])
 
 @app.get("/")
 async def root():

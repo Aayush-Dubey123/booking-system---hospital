@@ -1,11 +1,13 @@
 import os
 import time
+from pathlib import Path
 
 import jwt
 from dotenv import load_dotenv
 from passlib.context import CryptContext
 
-load_dotenv()
+env_path = Path(__file__).resolve().parent.parent / ".env"
+load_dotenv(dotenv_path=env_path)
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
