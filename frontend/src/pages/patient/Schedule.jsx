@@ -1,17 +1,17 @@
 import { useState } from 'react'
-import { getSchedule } from '../api/schedule'
-import Sidebar from '../components/Sidebar'
-import SlotChip from '../components/SlotChip'
-import LoadingSpinner from '../components/LoadingSpinner'
-import ErrorBanner from '../components/ErrorBanner'
-import EmptyState from '../components/EmptyState'
+import { getSchedule } from '../../api/schedule'
+import Layout from '../../components/Layout'
+import SlotChip from '../../components/SlotChip'
+import LoadingSpinner from '../../components/LoadingSpinner'
+import ErrorBanner from '../../components/ErrorBanner'
+import EmptyState from '../../components/EmptyState'
 import { Search, CalendarDays, CheckCircle, XCircle } from 'lucide-react'
 
 function getTodayStr() {
   return new Date().toISOString().split('T')[0]
 }
 
-export default function DoctorSchedule() {
+export default function Schedule() {
   const [date, setDate] = useState(getTodayStr())
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(false)
@@ -35,9 +35,8 @@ export default function DoctorSchedule() {
   }
 
   return (
-    <div className="flex min-h-screen bg-slate-50">
-      <Sidebar />
-      <main className="flex-1 p-8 max-w-3xl">
+    <Layout>
+      <div className="max-w-3xl">
         <div className="mb-7">
           <h1 className="text-2xl font-bold text-slate-800">Doctor Schedule</h1>
           <p className="text-slate-500 text-sm mt-0.5">Check slot availability for any date</p>
@@ -45,10 +44,11 @@ export default function DoctorSchedule() {
 
         {/* Date picker + search */}
         <div className="card mb-6">
-          <div className="flex gap-3 items-end">
-            <div className="flex-1">
-              <label className="label">Select Date</label>
+          <div className="flex gap-3 items-end flex-col sm:flex-row">
+            <div className="flex-1 w-full">
+              <label htmlFor="schedule-date" className="label">Select Date</label>
               <input
+                id="schedule-date"
                 type="date"
                 className="input"
                 value={date}
@@ -58,7 +58,7 @@ export default function DoctorSchedule() {
             <button
               onClick={handleSearch}
               disabled={loading || !date}
-              className="btn-primary"
+              className="btn-primary w-full sm:w-auto"
             >
               <Search className="w-4 h-4" />
               Check Slots
@@ -133,7 +133,7 @@ export default function DoctorSchedule() {
         {!loading && !data && searched && !error && (
           <EmptyState title="No data" description="Try selecting a different date." />
         )}
-      </main>
-    </div>
+      </div>
+    </Layout>
   )
 }

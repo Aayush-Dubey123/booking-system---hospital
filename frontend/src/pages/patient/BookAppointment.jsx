@@ -1,11 +1,11 @@
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useNavigate } from 'react-router-dom'
-import { bookAppointment } from '../api/appointment'
-import { getSchedule } from '../api/schedule'
-import Sidebar from '../components/Sidebar'
-import SlotChip from '../components/SlotChip'
-import ErrorBanner from '../components/ErrorBanner'
+import { bookAppointment } from '../../api/appointmentApi'
+import { getSchedule } from '../../api/schedule'
+import { useToast } from '../../components/Toast'
+import Layout from '../../components/Layout'
+import SlotChip from '../../components/SlotChip'
 import { Loader2, CheckCircle, CalendarPlus } from 'lucide-react'
 
 const VALID_SLOTS = [
@@ -26,12 +26,12 @@ function getMaxDateStr() {
 export default function BookAppointment() {
   const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm()
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
   const [success, setSuccess] = useState(null)
   const [selectedSlot, setSelectedSlot] = useState('')
   const [bookedSlots, setBookedSlots] = useState([])
   const [scheduleLoading, setScheduleLoading] = useState(false)
   const navigate = useNavigate()
+  const toast = useToast()
 
   const watchDate = watch('appointment_date')
 
@@ -55,9 +55,8 @@ export default function BookAppointment() {
   }
 
   const onSubmit = async (data) => {
-    if (!selectedSlot) { setError('Please select a slot.'); return }
+    if (!selectedSlot) { toast.error('Please select a slot.'); return }
     setLoading(true)
-    setError('')
     try {
       const res = await bookAppointment({
         reason: data.reason,
@@ -67,8 +66,9 @@ export default function BookAppointment() {
         slot: selectedSlot,
       })
       setSuccess(res.data)
+      toast.success('Your appointment has been booked!', 'Booking Confirmed')
     } catch (err) {
-      setError(err.response?.data?.detail ?? 'Booking failed.')
+      toast.error(err.response?.data?.detail ?? 'Booking failed.')
     } finally {
       setLoading(false)
     }
@@ -76,9 +76,8 @@ export default function BookAppointment() {
 
   if (success) {
     return (
-      <div className="flex min-h-screen bg-slate-50">
-        <Sidebar />
-        <main className="flex-1 p-8 flex items-center justify-center">
+      <Layout>
+        <div className="flex items-center justify-center min-h-[60vh]">
           <div className="card max-w-sm w-full text-center shadow-md">
             <div className="w-14 h-14 bg-emerald-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
               <CheckCircle className="w-7 h-7 text-emerald-600" />
@@ -108,23 +107,20 @@ export default function BookAppointment() {
               </button>
             </div>
           </div>
-        </main>
-      </div>
+        </div>
+      </Layout>
     )
   }
 
   return (
-    <div className="flex min-h-screen bg-slate-50">
-      <Sidebar />
-      <main className="flex-1 p-8 max-w-2xl mx-auto w-full">
+    <Layout>
+      <div className="max-w-2xl mx-auto w-full">
         <div className="mb-7">
           <h1 className="text-2xl font-bold text-slate-800">Book Appointment</h1>
           <p className="text-slate-500 text-sm mt-0.5">Schedule a visit with CityCare Clinic</p>
         </div>
 
-        <ErrorBanner message={error} onRetry={null} />
-
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 mt-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
           <div className="card">
             <h2 className="font-semibold text-slate-700 mb-4 flex items-center gap-2">
               <CalendarPlus className="w-4 h-4 text-blue-500" />
@@ -133,8 +129,9 @@ export default function BookAppointment() {
 
             <div className="space-y-4">
               <div>
-                <label className="label">Date</label>
+                <label htmlFor="book-date" className="label">Date</label>
                 <input
+                  id="book-date"
                   type="date"
                   min={getTodayStr()}
                   max={getMaxDateStr()}
@@ -167,8 +164,9 @@ export default function BookAppointment() {
               )}
 
               <div>
-                <label className="label">Reason for Visit</label>
+                <label htmlFor="book-reason" className="label">Reason for Visit</label>
                 <input
+                  id="book-reason"
                   className={`input ${errors.reason ? 'input-error' : ''}`}
                   placeholder="e.g. Fever, headache"
                   {...register('reason', { required: 'Reason is required' })}
@@ -177,8 +175,9 @@ export default function BookAppointment() {
               </div>
 
               <div>
-                <label className="label">Symptoms</label>
+                <label htmlFor="book-symptoms" className="label">Symptoms</label>
                 <textarea
+                  id="book-symptoms"
                   rows={3}
                   className={`input resize-none ${errors.symptoms ? 'input-error' : ''}`}
                   placeholder="Describe your symptoms..."
@@ -188,8 +187,9 @@ export default function BookAppointment() {
               </div>
 
               <div>
-                <label className="label">Temperature (°C)</label>
+                <label htmlFor="book-temperature" className="label">Temperature (°C)</label>
                 <input
+                  id="book-temperature"
                   type="number"
                   step="0.1"
                   className={`input ${errors.temperature ? 'input-error' : ''}`}
@@ -210,7 +210,7 @@ export default function BookAppointment() {
             {loading ? 'Booking...' : 'Confirm Booking'}
           </button>
         </form>
-      </main>
-    </div>
+      </div>
+    </Layout>
   )
 }

@@ -1,35 +1,71 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import Login from './pages/Login'
-import Signup from './pages/Signup'
-import Dashboard from './pages/Dashboard'
-import BookAppointment from './pages/BookAppointment'
-import MyAppointments from './pages/MyAppointments'
-import DoctorSchedule from './pages/DoctorSchedule'
+import { AuthProvider } from './context/AuthContext'
+import { ToastProvider } from './components/Toast'
 import ProtectedRoute from './components/ProtectedRoute'
+
+// Auth pages
+import Login from './pages/auth/Login'
+import Signup from './pages/auth/Signup'
+
+// Patient pages
+import Dashboard from './pages/patient/Dashboard'
+import BookAppointment from './pages/patient/BookAppointment'
+import MyAppointments from './pages/patient/MyAppointments'
+import Schedule from './pages/patient/Schedule'
+
+// Doctor pages
+import DoctorDashboard from './pages/doctor/DoctorDashboard'
+import DoctorSchedule from './pages/doctor/DoctorSchedule'
 
 export default function App() {
   return (
     <BrowserRouter>
-      <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<Signup />} />
+      <AuthProvider>
+        <ToastProvider>
+          <Routes>
+            {/* Public routes */}
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<Signup />} />
 
-        <Route path="/dashboard" element={
-          <ProtectedRoute><Dashboard /></ProtectedRoute>
-        } />
-        <Route path="/book" element={
-          <ProtectedRoute><BookAppointment /></ProtectedRoute>
-        } />
-        <Route path="/my-appointments" element={
-          <ProtectedRoute><MyAppointments /></ProtectedRoute>
-        } />
-        <Route path="/schedule" element={
-          <ProtectedRoute><DoctorSchedule /></ProtectedRoute>
-        } />
+            {/* Patient routes */}
+            <Route path="/dashboard" element={
+              <ProtectedRoute allowedRoles={['patient']}>
+                <Dashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/book" element={
+              <ProtectedRoute allowedRoles={['patient']}>
+                <BookAppointment />
+              </ProtectedRoute>
+            } />
+            <Route path="/my-appointments" element={
+              <ProtectedRoute allowedRoles={['patient']}>
+                <MyAppointments />
+              </ProtectedRoute>
+            } />
+            <Route path="/schedule" element={
+              <ProtectedRoute allowedRoles={['patient']}>
+                <Schedule />
+              </ProtectedRoute>
+            } />
 
-        {/* Default redirect */}
-        <Route path="*" element={<Navigate to="/login" replace />} />
-      </Routes>
+            {/* Doctor routes */}
+            <Route path="/doctor/dashboard" element={
+              <ProtectedRoute allowedRoles={['doctor']}>
+                <DoctorDashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/doctor/schedule" element={
+              <ProtectedRoute allowedRoles={['doctor']}>
+                <DoctorSchedule />
+              </ProtectedRoute>
+            } />
+
+            {/* Default redirect */}
+            <Route path="*" element={<Navigate to="/login" replace />} />
+          </Routes>
+        </ToastProvider>
+      </AuthProvider>
     </BrowserRouter>
   )
 }

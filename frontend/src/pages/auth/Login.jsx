@@ -1,52 +1,63 @@
 import { useForm } from 'react-hook-form'
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { login } from '../api/auth'
-import ErrorBanner from '../components/ErrorBanner'
-import Navbar from '../components/Navbar'
+import { useAuth } from '../../hooks/useAuth'
+import { useToast } from '../../components/Toast'
+import Navbar from '../../components/Navbar'
 import { Loader2, LogIn } from 'lucide-react'
 
 export default function Login() {
   const { register, handleSubmit, formState: { errors } } = useForm()
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
+  const { login, isAuthenticated, role } = useAuth()
+  const toast = useToast()
   const navigate = useNavigate()
+
+  // If already authenticated, redirect
+  if (isAuthenticated) {
+    const target = role === 'doctor' ? '/doctor/dashboard' : '/dashboard'
+    navigate(target, { replace: true })
+    return null
+  }
 
   const onSubmit = async (data) => {
     setLoading(true)
-    setError('')
     try {
-      const res = await login(data)
-      localStorage.setItem('access_token', res.data.access_token)
-      localStorage.setItem('role', res.data.role)
-      navigate('/dashboard')
+      const userRole = await login(data)
+      toast.success('Welcome back!', 'Login Successful')
+      if (userRole === 'doctor') {
+        navigate('/doctor/dashboard')
+      } else {
+        navigate('/dashboard')
+      }
     } catch (err) {
-      setError(err.response?.data?.detail ?? 'Login failed. Please try again.')
+      toast.error(
+        err.response?.data?.detail ?? 'Login failed. Please try again.'
+      )
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-slate-100 flex flex-col">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-slate-50 to-indigo-50 flex flex-col">
       <Navbar />
       <div className="flex-1 flex items-center justify-center p-6">
         <div className="w-full max-w-sm">
           <div className="card shadow-lg">
             <div className="text-center mb-8">
-              <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-3">
+              <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-md shadow-blue-200">
                 <LogIn className="w-5 h-5 text-white" />
               </div>
               <h1 className="text-2xl font-bold text-slate-800">Welcome back</h1>
               <p className="text-slate-500 text-sm mt-1">Sign in to your CityCare account</p>
             </div>
 
-            <ErrorBanner message={error} onRetry={null} />
-
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 mt-4">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <div>
-                <label className="label">Email</label>
+                <label htmlFor="login-email" className="label">Email</label>
                 <input
+                  id="login-email"
                   type="email"
                   className={`input ${errors.email ? 'input-error' : ''}`}
                   placeholder="you@email.com"
@@ -56,8 +67,9 @@ export default function Login() {
               </div>
 
               <div>
-                <label className="label">Password</label>
+                <label htmlFor="login-password" className="label">Password</label>
                 <input
+                  id="login-password"
                   type="password"
                   className={`input ${errors.password ? 'input-error' : ''}`}
                   placeholder="••••••••"

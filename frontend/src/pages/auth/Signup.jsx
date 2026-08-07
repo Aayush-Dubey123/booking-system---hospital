@@ -1,21 +1,21 @@
 import { useForm } from 'react-hook-form'
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { signup, login } from '../api/auth'
-import ErrorBanner from '../components/ErrorBanner'
-import Navbar from '../components/Navbar'
+import { useAuth } from '../../hooks/useAuth'
+import { useToast } from '../../components/Toast'
+import Navbar from '../../components/Navbar'
 import { Loader2, UserPlus } from 'lucide-react'
 
 export default function Signup() {
   const { register, handleSubmit, watch, formState: { errors } } = useForm()
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
+  const { signup, login } = useAuth()
+  const toast = useToast()
   const navigate = useNavigate()
   const password = watch('password')
 
   const onSubmit = async (data) => {
     setLoading(true)
-    setError('')
     try {
       // Signup
       await signup({
@@ -25,38 +25,42 @@ export default function Signup() {
         password: data.password,
       })
       // Auto-login
-      const loginRes = await login({ email: data.email, password: data.password })
-      localStorage.setItem('access_token', loginRes.data.access_token)
-      localStorage.setItem('role', loginRes.data.role)
-      navigate('/dashboard')
+      const userRole = await login({ email: data.email, password: data.password })
+      toast.success('Your account has been created!', 'Welcome to CityCare')
+      if (userRole === 'doctor') {
+        navigate('/doctor/dashboard')
+      } else {
+        navigate('/dashboard')
+      }
     } catch (err) {
-      setError(err.response?.data?.detail ?? 'Signup failed. Please try again.')
+      toast.error(
+        err.response?.data?.detail ?? 'Signup failed. Please try again.'
+      )
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-slate-100 flex flex-col">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-slate-50 to-indigo-50 flex flex-col">
       <Navbar />
       <div className="flex-1 flex items-center justify-center p-6">
         <div className="w-full max-w-md">
           <div className="card shadow-lg">
             <div className="text-center mb-7">
-              <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-3">
+              <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-md shadow-blue-200">
                 <UserPlus className="w-5 h-5 text-white" />
               </div>
               <h1 className="text-2xl font-bold text-slate-800">Create account</h1>
               <p className="text-slate-500 text-sm mt-1">Join CityCare Clinic today</p>
             </div>
 
-            <ErrorBanner message={error} />
-
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 mt-4">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="label">First Name</label>
+                  <label htmlFor="signup-first-name" className="label">First Name</label>
                   <input
+                    id="signup-first-name"
                     className={`input ${errors.first_name ? 'input-error' : ''}`}
                     placeholder="John"
                     {...register('first_name', { required: 'Required' })}
@@ -64,8 +68,9 @@ export default function Signup() {
                   {errors.first_name && <p className="text-red-500 text-xs mt-1">{errors.first_name.message}</p>}
                 </div>
                 <div>
-                  <label className="label">Last Name</label>
+                  <label htmlFor="signup-last-name" className="label">Last Name</label>
                   <input
+                    id="signup-last-name"
                     className={`input ${errors.last_name ? 'input-error' : ''}`}
                     placeholder="Doe"
                     {...register('last_name', { required: 'Required' })}
@@ -75,8 +80,9 @@ export default function Signup() {
               </div>
 
               <div>
-                <label className="label">Email</label>
+                <label htmlFor="signup-email" className="label">Email</label>
                 <input
+                  id="signup-email"
                   type="email"
                   className={`input ${errors.email ? 'input-error' : ''}`}
                   placeholder="you@email.com"
@@ -86,8 +92,9 @@ export default function Signup() {
               </div>
 
               <div>
-                <label className="label">Password</label>
+                <label htmlFor="signup-password" className="label">Password</label>
                 <input
+                  id="signup-password"
                   type="password"
                   className={`input ${errors.password ? 'input-error' : ''}`}
                   placeholder="Min 8 characters"
@@ -97,8 +104,9 @@ export default function Signup() {
               </div>
 
               <div>
-                <label className="label">Confirm Password</label>
+                <label htmlFor="signup-confirm-password" className="label">Confirm Password</label>
                 <input
+                  id="signup-confirm-password"
                   type="password"
                   className={`input ${errors.confirm_password ? 'input-error' : ''}`}
                   placeholder="Repeat password"
