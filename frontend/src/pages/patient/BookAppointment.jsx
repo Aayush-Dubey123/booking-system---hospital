@@ -144,9 +144,7 @@ export default function BookAppointment() {
       
       <PulseDivider animKey="book" />
 
-      <div className="section-gap" style={{ display: 'grid', gridTemplateColumns: '1.3fr 0.7fr', gap: '16px', alignItems: 'start' }}
-        className="max-lg:grid-cols-1 max-lg:!grid"
-      >
+      <div className="section-gap max-lg:grid-cols-1 max-lg:!grid" style={{ display: 'grid', gridTemplateColumns: '1.3fr 0.7fr', gap: '16px', alignItems: 'start' }}>
         {/* Left column — Form */}
         <form onSubmit={handleSubmit(onSubmit)} className="panel">
           <div className="panel-head">
@@ -179,7 +177,7 @@ export default function BookAppointment() {
                     {slots.map((slot) => (
                       <SlotChip
                         key={slot}
-                        time={slot}
+                        slot={slot}
                         selected={selectedSlot === slot}
                         onClick={() => setValue('slot', slot)}
                       />

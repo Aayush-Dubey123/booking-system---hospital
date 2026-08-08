@@ -5,10 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
 from core.apis.routes.doctor_router import doctor_router
 from core.apis.routes.auth_router import auth_router
-from core.apis.routes.appointment_router import appointment_router
-from core.apis.routes.my_appointments_router import my_appointments_router
-from core.apis.routes.schedule_router import schedule_router
-from core.apis.routes.dashboard_router import dashboard_router
+from core.apis.routes.user_router import user_router
 from core.database.database import (
     connect_to_mongo,
     close_mongo_connection,
@@ -28,11 +25,7 @@ app = FastAPI(
     lifespan=lifespan,
     redoc_url="/documentation",
 )
-
-app.include_router(
-    doctor_router,
-    tags=["Doctor"],
-)
+ 
 
 app.add_middleware(
     CORSMiddleware,
@@ -43,10 +36,7 @@ app.add_middleware(
 )
 
 app.include_router(auth_router, tags=["Authentication"])
-app.include_router(appointment_router, tags=["Appointments"])
-app.include_router(my_appointments_router, tags=["My Appointments"])
-app.include_router(schedule_router, tags=["Doctor Schedule"])
-app.include_router(dashboard_router, tags=["Dashboard"])
+app.include_router(user_router, tags=["Patient"])
 app.include_router(doctor_router, tags=["Doctor"])
 
 @app.get("/")

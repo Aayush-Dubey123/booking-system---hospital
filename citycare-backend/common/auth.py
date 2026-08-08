@@ -4,12 +4,10 @@ from pathlib import Path
 
 import jwt
 from dotenv import load_dotenv
-from passlib.context import CryptContext
+import bcrypt
 
 env_path = Path(__file__).resolve().parent.parent / ".env"
 load_dotenv(dotenv_path=env_path)
-
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 JWT_SECRET = os.environ.get("secret")
 JWT_ALGORITHM = os.environ.get("algorithm", "HS256")
@@ -32,8 +30,13 @@ def decodeJWT(token: str) -> dict | None:
 
 
 def encrypt_password(password: str) -> str:
-    return pwd_context.hash(password)
+    salt = bcrypt.gensalt()
+    hashed = bcrypt.hashpw(password.encode("utf-8"), salt)
+    return hashed.decode("utf-8")
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return pwd_context.verify(plain_password, hashed_password)
+    return bcrypt.checkpw(
+        plain_password.encode("utf-8"), 
+        hashed_password.encode("utf-8")
+    )

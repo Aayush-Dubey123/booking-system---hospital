@@ -4,10 +4,8 @@ from fastapi import APIRouter, Header, HTTPException, Query, status
 
 from common.logger import logger
 from core.controllers.doctor_controller import DoctorController
-from core.apis.schemas.responses.DoctorDashboardResponse import (
+from core.apis.schemas.responses.doctor_response import (
     DoctorDashboardResponse,
-)
-from core.apis.schemas.responses.DoctorScheduleResponse import (
     DoctorScheduleResponse,
 )
 

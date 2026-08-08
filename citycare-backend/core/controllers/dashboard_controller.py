@@ -2,7 +2,7 @@ from datetime import date
 
 from fastapi import HTTPException, status
 
-from core.cruds.dashboard_crud import DashboardCRUD
+from core.cruds.appointment_crud import AppointmentCRUD
 from common.logger import logger
 
 logging = logger(__name__)
@@ -25,7 +25,7 @@ VALID_SLOTS = [
 
 class DashboardController:
     def __init__(self) -> None:
-        self.dashboard_crud = DashboardCRUD()
+        self.dashboard_crud = AppointmentCRUD()
 
     async def get_dashboard(self) -> dict:
         try:

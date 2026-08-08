@@ -120,3 +120,96 @@ class AppointmentController:
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="An error occurred while booking the appointment.",
             )
+
+    async def get_my_appointments(self, authorization: str) -> list:
+        try:
+            logging.info("Calling AppointmentController.get_my_appointments")
+
+            if not authorization.startswith("Bearer "):
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Invalid authorization header.",
+                )
+
+            token = authorization.split(" ")[1]
+
+            payload = decodeJWT(token)
+
+            if payload is None:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Invalid or expired token.",
+                )
+
+            patient_id = payload["id"]
+
+            appointments = await self.appointment_crud.get_patient_appointments(
+                patient_id
+            )
+
+            logging.info(
+                f"Found {len(appointments)} appointments for patient {patient_id}"
+            )
+
+            return [
+                {
+                    "id": str(appointment.id),
+                    "patient_id": appointment.patient_id,
+                    "reason": appointment.reason,
+                    "symptoms": appointment.symptoms,
+                    "temperature": appointment.temperature,
+                    "appointment_date": appointment.appointment_date,
+                    "slot": appointment.slot,
+                    "status": appointment.status,
+                    "created_at": appointment.created_at,
+                }
+                for appointment in appointments
+            ]
+
+        except HTTPException:
+            raise
+
+        except Exception as error:
+            logging.error(
+                f"Error in AppointmentController.get_my_appointments: {error}"
+            )
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="An error occurred while fetching appointments.",
+            )
+
+    async def get_schedule(self, appointment_date: date) -> dict:
+        try:
+            logging.info("Calling AppointmentController.get_schedule")
+
+            booked_slots = await self.appointment_crud.get_booked_slots(
+                appointment_date
+            )
+
+            free_slots = [
+                slot for slot in VALID_SLOTS if slot not in booked_slots
+            ]
+
+            logging.info(
+                f"Schedule computed for {appointment_date}: "
+                f"{len(booked_slots)} booked, {len(free_slots)} free"
+            )
+
+            return {
+                "appointment_date": appointment_date,
+                "booked_slots": booked_slots,
+                "free_slots": free_slots,
+                "total_slots": len(VALID_SLOTS),
+                "available_count": len(free_slots),
+                "booked_count": len(booked_slots),
+            }
+
+        except HTTPException:
+            raise
+
+        except Exception as error:
+            logging.error(f"Error in AppointmentController.get_schedule: {error}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="An error occurred while fetching the schedule.",
+            )

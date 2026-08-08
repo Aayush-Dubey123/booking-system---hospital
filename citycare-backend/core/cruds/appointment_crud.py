@@ -134,3 +134,56 @@ class AppointmentCRUD:
                 f"Error fetching doctor schedule: {error}"
             )
             raise
+
+    async def get_total_appointments(self) -> int:
+        try:
+            logging.info("Fetching total appointment count")
+            appointments = await self.engine.find(Appointment)
+            return len(appointments)
+        except Exception as error:
+            logging.error(f"Error fetching total appointments: {error}")
+            raise
+
+    async def get_appointments_by_status(
+        self,
+        status_value: str,
+    ) -> int:
+        try:
+            logging.info(
+                f"Fetching appointments with status: {status_value}"
+            )
+
+            appointments = await self.engine.find(
+                Appointment,
+                Appointment.status == status_value,
+            )
+
+            return len(appointments)
+
+        except Exception as error:
+            logging.error(
+                f"Error fetching appointments by status: {error}"
+            )
+            raise
+
+    async def get_booked_slots(
+        self,
+        appointment_date: date,
+    ) -> list[str]:
+        try:
+            logging.info(
+                f"Fetching booked slots for date: {appointment_date}"
+            )
+
+            appointment_datetime = _date_to_datetime(appointment_date)
+
+            appointments = await self.engine.find(
+                Appointment,
+                Appointment.appointment_date == appointment_datetime,
+            )
+
+            return [appointment.slot for appointment in appointments]
+
+        except Exception as error:
+            logging.error(f"Error fetching booked slots: {error}")
+            raise
