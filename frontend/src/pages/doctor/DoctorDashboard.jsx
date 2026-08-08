@@ -1,17 +1,43 @@
 import { useEffect, useState } from 'react'
 import { getDoctorDashboard } from '../../api/doctorApi'
 import Layout from '../../components/Layout'
-import DashboardCard from '../../components/DashboardCard'
-import LoadingSpinner from '../../components/LoadingSpinner'
+import MetricTile from '../../components/MetricTile'
+import PulseDivider from '../../components/PulseDivider'
 import ErrorBanner from '../../components/ErrorBanner'
-import { Users, CalendarCheck, CalendarClock, RefreshCw, Badge as BadgeIcon, Activity } from 'lucide-react'
+import { Users, CalendarDays, CalendarClock } from 'lucide-react'
+
+const DOCTOR_NAME = 'Dr. Amruta'
+const DOCTOR_INITIALS = 'AM'
+
+/* Shared flat doctor illustration */
+function DoctorArt() {
+  return (
+    <svg viewBox="0 0 220 230" style={{ width: '100%', height: 'auto' }}>
+      <ellipse cx="110" cy="205" rx="90" ry="14" fill="#0A5646" opacity=".35" />
+      <rect x="30" y="70" width="60" height="60" rx="10" fill="#DCEEE8" />
+      <path d="M40 70 h40 v-6 a20 20 0 0 0 -40 0 z" fill="#F1D9C6" />
+      <circle cx="60" cy="55" r="20" fill="#F1D9C6" />
+      <path d="M42 50 a18 14 0 0 1 36 0" fill="#2A2018" />
+      <rect x="80" y="88" width="112" height="90" rx="14" fill="#0E6E5C" />
+      <circle cx="136" cy="70" r="22" fill="#F1D9C6" />
+      <path d="M116 66 a20 15 0 0 1 40 0" fill="#2A2018" />
+      <rect x="105" y="90" width="62" height="88" rx="12" fill="#FFFFFF" />
+      <rect x="118" y="108" width="36" height="6" rx="3" fill="#D9E5E0" />
+      <rect x="118" y="120" width="36" height="6" rx="3" fill="#D9E5E0" />
+      <rect x="118" y="132" width="22" height="6" rx="3" fill="#E1583F" />
+      <circle cx="70" cy="115" r="7" fill="none" stroke="#0A5646" strokeWidth="3" />
+      <path d="M70 122 v14 a10 10 0 0 0 10 10 h6" fill="none" stroke="#0A5646" strokeWidth="3" strokeLinecap="round" />
+      <circle cx="90" cy="147" r="5" fill="#E1583F" />
+    </svg>
+  )
+}
 
 export default function DoctorDashboard() {
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
-  const fetchData = async () => {
+  const fetchDashboard = async () => {
     setLoading(true)
     setError('')
     try {
@@ -24,65 +50,78 @@ export default function DoctorDashboard() {
     }
   }
 
-  useEffect(() => { fetchData() }, [])
+  useEffect(() => {
+    fetchDashboard()
+  }, [])
 
-  const cards = data ? [
-    { label: 'Total Patients', value: data.total_patients, icon: Users, color: 'blue' },
-    { label: "Today's Visits", value: data.todays_visits, icon: CalendarCheck, color: 'green' },
-    { label: 'Upcoming Visits', value: data.upcoming_visits, icon: CalendarClock, color: 'violet' },
-  ] : []
+  const todaysVisits = data?.todays_visits ?? null
+  const upcomingVisits = data?.upcoming_visits ?? null
 
   return (
-    <Layout title="Doctor Dashboard">
-      <ErrorBanner message={error} onRetry={fetchData} />
+    <Layout title="Dashboard">
+      <ErrorBanner message={error} onRetry={fetchDashboard} />
 
-      {loading ? (
-        <LoadingSpinner text="Loading dashboard..." />
-      ) : (
-        <div className="space-y-8 animate-slide-in">
-          {/* Hero Section */}
-          <div className="bg-white rounded-3xl p-8 md:p-10 flex flex-col md:flex-row items-center justify-between border border-slate-100 shadow-sm relative overflow-hidden">
-            <div className="relative z-10 space-y-4">
-              <div className="space-y-1">
-                <p className="text-slate-500 font-medium">Good Morning,</p>
-                <h1 className="text-3xl md:text-4xl font-bold text-slate-800">Dr. Amruta</h1>
-              </div>
-              <div className="flex flex-wrap items-center gap-3">
-                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-700 rounded-lg text-sm font-semibold">
-                  General Physician
-                </span>
-                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 text-slate-600 rounded-lg text-sm font-semibold">
-                  <BadgeIcon className="w-4 h-4 text-slate-400" />
-                  #CC-1042
-                </span>
-              </div>
-            </div>
-            
-            <div className="relative z-10 mt-6 md:mt-0">
-               <div className="w-32 h-32 md:w-40 md:h-40 bg-gradient-to-tr from-blue-100 to-indigo-50 rounded-full flex items-center justify-center p-6 shadow-inner">
-                  <Activity className="w-16 h-16 md:w-20 md:h-20 text-blue-500/80" strokeWidth={1.5} />
-               </div>
-            </div>
-            {/* Background Decoration */}
-            <div className="absolute right-0 bottom-0 w-64 h-64 bg-blue-50 rounded-full blur-3xl translate-x-1/3 translate-y-1/3"></div>
+      <div className="page-head">
+        <div>
+          <h1>Dashboard</h1>
+          <p>Clinic overview and patient statistics.</p>
+        </div>
+        <div className="profile-chip">
+          <div className="avatar" style={{ background: 'var(--pulse-tint)', color: 'var(--pulse-deep)' }}>
+            {DOCTOR_INITIALS}
           </div>
+          <span>{DOCTOR_NAME}</span>
+        </div>
+      </div>
 
-          {/* Statistics */}
-          <div>
-            <div className="flex items-center justify-between mb-4">
-               <h2 className="text-lg font-bold text-slate-800">Overview</h2>
-               <button onClick={fetchData} className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
-                 <RefreshCw className="w-5 h-5" />
-               </button>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-              {cards.map((card) => (
-                <DashboardCard key={card.label} {...card} />
-              ))}
+      <PulseDivider animKey={loading ? 'loading' : 'loaded'} />
+
+      <div className="hero section-gap">
+        <div className="hero-left">
+          <div className="hero-eyebrow">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 3" />
+            </svg>
+            {new Date().toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long' })}
+          </div>
+          <h2>Good morning, {DOCTOR_NAME}</h2>
+          <p>
+            {todaysVisits != null
+              ? `You have ${todaysVisits} patient${todaysVisits !== 1 ? 's' : ''} scheduled for today.`
+              : 'Loading your schedule…'}
+          </p>
+          <div className="hero-pills">
+            <div className="role-badge doctor" style={{ margin: 0, padding: '8px 14px', fontSize: 13 }}>
+              <span className="dot" />
+              Doctor
             </div>
           </div>
         </div>
-      )}
+        <div className="hero-art">
+          <DoctorArt />
+        </div>
+      </div>
+
+      <div className="tile-grid section-gap">
+        <MetricTile
+          label="Total patients"
+          value={loading ? null : (data?.total_patients ?? '—')}
+          icon={Users}
+          variant="teal"
+        />
+        <MetricTile
+          label="Today's visits"
+          value={loading ? null : (data?.todays_visits ?? '—')}
+          icon={CalendarDays}
+          variant="pulse"
+        />
+        <MetricTile
+          label="Upcoming visits"
+          value={loading ? null : (data?.upcoming_visits ?? '—')}
+          icon={CalendarClock}
+          variant="amber"
+        />
+      </div>
     </Layout>
   )
 }

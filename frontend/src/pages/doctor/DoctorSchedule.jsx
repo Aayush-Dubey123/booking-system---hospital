@@ -1,152 +1,224 @@
 import { useState } from 'react'
 import { getDoctorSchedule } from '../../api/doctorApi'
 import Layout from '../../components/Layout'
+import PulseDivider from '../../components/PulseDivider'
 import LoadingSpinner from '../../components/LoadingSpinner'
 import ErrorBanner from '../../components/ErrorBanner'
 import EmptyState from '../../components/EmptyState'
-import { Search, Thermometer, User, Clock, FileText, Activity, Calendar as CalendarIcon } from 'lucide-react'
+import { Search, CalendarDays } from 'lucide-react'
 
-function getTodayStr() {
-  return new Date().toISOString().split('T')[0]
-}
+const DOCTOR_NAME = 'Dr. Amruta'
+const DOCTOR_INITIALS = 'AM'
+const TOTAL_SLOTS_PER_DAY = 12 // Hardcoded constant matching existing app logic
 
-const statusBadge = (status) => {
-  const map = {
-    booked: 'bg-blue-50 text-blue-700 border-blue-100',
-    cancelled: 'bg-rose-50 text-rose-700 border-rose-100',
-    completed: 'bg-emerald-50 text-emerald-700 border-emerald-100',
-  }
+/* Flat doctor illustration (shared) */
+function DoctorArt() {
   return (
-    <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold capitalize border ${map[status] ?? 'bg-slate-50 text-slate-600 border-slate-200'}`}>
-      {status}
-    </span>
+    <svg viewBox="0 0 220 230" style={{ width: '100%', height: 'auto', maxWidth: 190 }}>
+      <ellipse cx="110" cy="205" rx="90" ry="14" fill="#0A5646" opacity=".35" />
+      <rect x="30" y="70" width="60" height="60" rx="10" fill="#DCEEE8" />
+      <path d="M40 70 h40 v-6 a20 20 0 0 0 -40 0 z" fill="#F1D9C6" />
+      <circle cx="60" cy="55" r="20" fill="#F1D9C6" />
+      <path d="M42 50 a18 14 0 0 1 36 0" fill="#2A2018" />
+      <rect x="80" y="88" width="112" height="90" rx="14" fill="#0E6E5C" />
+      <circle cx="136" cy="70" r="22" fill="#F1D9C6" />
+      <path d="M116 66 a20 15 0 0 1 40 0" fill="#2A2018" />
+      <rect x="105" y="90" width="62" height="88" rx="12" fill="#FFFFFF" />
+      <rect x="118" y="108" width="36" height="6" rx="3" fill="#D9E5E0" />
+      <rect x="118" y="120" width="36" height="6" rx="3" fill="#D9E5E0" />
+      <rect x="118" y="132" width="22" height="6" rx="3" fill="#E1583F" />
+      <circle cx="70" cy="115" r="7" fill="none" stroke="#0A5646" strokeWidth="3" />
+      <path d="M70 122 v14 a10 10 0 0 0 10 10 h6" fill="none" stroke="#0A5646" strokeWidth="3" strokeLinecap="round" />
+      <circle cx="90" cy="147" r="5" fill="#E1583F" />
+    </svg>
   )
 }
 
-function DoctorAppointmentCard({ appt }) {
-  return (
-    <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm hover:shadow-md transition-shadow duration-300 relative overflow-hidden group flex flex-col h-full">
-      <div className="absolute left-0 top-0 w-1 h-full bg-blue-500 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-      <div className="flex items-start justify-between mb-4">
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400">
-             <User className="w-6 h-6" />
-          </div>
-          <div>
-            <span className="font-bold text-slate-800 text-base block">{appt.patient_name}</span>
-            <span className="text-xs font-medium text-slate-500 flex items-center gap-1 mt-0.5">
-              <CalendarIcon className="w-3 h-3" />
-              {appt.appointment_date}
-            </span>
-          </div>
-        </div>
-        {statusBadge(appt.status)}
-      </div>
+function getAvatarStyle(name) {
+  // Simple hash to pick a consistent color per patient
+  const hash = name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)
+  const styles = [
+    { background: 'var(--teal-tint)',  color: 'var(--teal-deep)' },
+    { background: 'var(--pulse-tint)', color: 'var(--pulse-deep)' },
+    { background: 'var(--amber-tint)', color: 'var(--amber)' },
+    { background: 'var(--surface-tint)', color: 'var(--ink-soft)' },
+  ]
+  return styles[hash % styles.length]
+}
 
-      <div className="grid grid-cols-2 gap-4 bg-slate-50 rounded-xl p-4 mt-auto">
-        <div className="flex items-center gap-2 text-slate-700 text-sm font-medium">
-          <Clock className="w-4 h-4 text-slate-400" />
-          <span className="bg-white px-2 py-0.5 rounded-md border border-slate-200 shadow-xs">{appt.slot}</span>
-        </div>
-        <div className="flex items-center gap-2 text-slate-700 text-sm font-medium">
-          <Thermometer className="w-4 h-4 text-slate-400" />
-          <span>{appt.temperature}°C</span>
-        </div>
-        <div className="flex flex-col gap-1 col-span-2 mt-2">
-          <div className="flex items-start gap-2">
-            <FileText className="w-4 h-4 text-blue-500 mt-0.5" />
-            <span className="font-semibold text-slate-800 text-sm">{appt.reason}</span>
-          </div>
-          <div className="flex items-start gap-2 pl-6">
-            <span className="text-slate-500 text-sm leading-relaxed">{appt.symptoms}</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
+function getStatusClass(status) {
+  if (status === 'booked')     return 'confirmed'
+  if (status === 'cancelled')  return 'cancelled'
+  if (status === 'completed')  return 'confirmed'
+  return 'waiting'
 }
 
 export default function DoctorSchedule() {
-  const [date, setDate] = useState(getTodayStr())
-  const [data, setData] = useState(null)
+  const [date, setDate] = useState(new Date().toISOString().split('T')[0])
+  const [schedule, setSchedule] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const [searched, setSearched] = useState(false)
+  const [hasSearched, setHasSearched] = useState(false)
 
-  const handleSearch = async () => {
+  const handleSearch = async (e) => {
+    e?.preventDefault()
     if (!date) return
+
     setLoading(true)
     setError('')
-    setSearched(true)
+    setHasSearched(true)
+    
     try {
       const res = await getDoctorSchedule(date)
-      setData(res.data)
+      setSchedule(res.data)
     } catch (err) {
-      setError(err.response?.data?.detail ?? 'Failed to fetch schedule.')
-      setData(null)
+      setError(err.response?.data?.detail ?? 'Failed to load schedule.')
     } finally {
       setLoading(false)
     }
   }
 
-  return (
-    <Layout title="Today's Schedule">
-      <div className="mb-8 lg:hidden">
-        <h1 className="text-3xl font-bold text-slate-800 tracking-tight">Today's Schedule</h1>
-        <p className="text-slate-500 mt-1">View patient appointments by date</p>
-      </div>
+  const bookedCount = schedule.length
+  const openCount = Math.max(0, TOTAL_SLOTS_PER_DAY - bookedCount)
 
-      {/* Date picker + search */}
-      <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 mb-8 animate-slide-in">
-        <div className="flex gap-4 items-end flex-col sm:flex-row">
-          <div className="flex-1 w-full">
-            <label htmlFor="doctor-schedule-date" className="label text-slate-600 font-semibold mb-2">Select Date</label>
-            <input
-              id="doctor-schedule-date"
-              type="date"
-              className="input bg-slate-50 border-slate-200"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-            />
+  // Format date for display in the panel head
+  const displayDate = new Date(date).toLocaleDateString('en-US', {
+    weekday: 'short', month: 'short', day: 'numeric'
+  })
+
+  return (
+    <Layout title="Schedule">
+      <div className="page-head">
+        <div>
+          <h1>Schedule</h1>
+          <p>Manage your daily appointments.</p>
+        </div>
+        <div className="profile-chip">
+          <div className="avatar" style={{ background: 'var(--pulse-tint)', color: 'var(--pulse-deep)' }}>
+            {DOCTOR_INITIALS}
           </div>
-          <button
-            onClick={handleSearch}
-            disabled={loading || !date}
-            className="btn-primary w-full sm:w-auto px-8 shadow-blue-500/20 shadow-lg"
-          >
-            <Search className="w-4 h-4" />
-            Load Board
-          </button>
+          <span>{DOCTOR_NAME}</span>
+        </div>
+      </div>
+      
+      <PulseDivider animKey="schedule" />
+
+      {/* Hero Banner (Always shown, stats reflect search results or placeholders) */}
+      <div className="hero section-gap">
+        <div className="hero-left">
+          <h2>Good morning, {DOCTOR_NAME}</h2>
+          <p>
+            {hasSearched && !loading
+              ? `You have ${bookedCount} appointment${bookedCount !== 1 ? 's' : ''} on this date.`
+              : 'Select a date below to view your schedule.'}
+          </p>
+          <div className="hero-pills">
+            <div className="hero-pill">
+              <div className="ic">
+                <CalendarDays size={17} color="#fff" />
+              </div>
+              <div>
+                <div className="num">
+                  {hasSearched && !loading ? String(bookedCount).padStart(2, '0') : '—'}
+                </div>
+                <div className="lbl">Booked today</div>
+              </div>
+            </div>
+            <div className="hero-pill">
+              <div className="ic">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 3" />
+                </svg>
+              </div>
+              <div>
+                <div className="num">
+                  {hasSearched && !loading ? String(openCount).padStart(2, '0') : '—'}
+                </div>
+                <div className="lbl">Slots open</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="hero-art">
+          <DoctorArt />
         </div>
       </div>
 
       <ErrorBanner message={error} onRetry={handleSearch} />
 
-      {loading && <LoadingSpinner text="Fetching appointment board..." />}
-
-      {!loading && data && data.length > 0 && (
-        <div className="animate-slide-in">
-          <div className="flex items-center justify-between mb-4 px-1">
-             <h2 className="text-lg font-bold text-slate-800">Appointments ({data.length})</h2>
-             <span className="text-sm font-medium text-slate-500">{date}</span>
+      {/* Date Picker Panel */}
+      <div className="section-gap">
+        <form onSubmit={handleSearch} className="panel" style={{ padding: '24px 30px' }}>
+          <div className="date-bar">
+            <input
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              required
+            />
+            <button type="submit" disabled={loading || !date}>
+              {loading ? 'Loading…' : (
+                <>
+                  <Search size={16} /> View schedule
+                </>
+              )}
+            </button>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-            {data.map((row, idx) => (
-              <DoctorAppointmentCard key={idx} appt={row} />
-            ))}
+        </form>
+      </div>
+
+      {/* Appointments List Panel */}
+      {hasSearched && (
+        <div className="section-gap">
+          <div className="panel">
+            <div className="panel-head">
+              <div className="t">
+                <CalendarDays size={18} />
+                <h2>Appointments for {displayDate}</h2>
+              </div>
+              {!loading && schedule.length > 0 && (
+                <span className="tag">{schedule.length} total</span>
+              )}
+            </div>
+            <div className="panel-body" style={{ paddingTop: 6, paddingBottom: 6 }}>
+              {loading ? (
+                <div style={{ padding: '40px 0' }}>
+                  <LoadingSpinner message="Loading schedule…" />
+                </div>
+              ) : schedule.length > 0 ? (
+                schedule.map((appt, i) => {
+                  const initials = appt.patient_name
+                    .split(' ')
+                    .map(w => w[0])
+                    .join('')
+                    .toUpperCase()
+                    .slice(0, 2)
+                    
+                  return (
+                    <div key={i} className="appt-row">
+                      <div className="appt-time">{appt.slot}</div>
+                      <div className="appt-avatar" style={getAvatarStyle(appt.patient_name)}>
+                        {initials}
+                      </div>
+                      <div className="appt-info">
+                        <p className="name">{appt.patient_name}</p>
+                        <p className="reason">{appt.reason}</p>
+                      </div>
+                      <div className={`appt-status ${getStatusClass(appt.status)}`}>
+                        {appt.status.charAt(0).toUpperCase() + appt.status.slice(1)}
+                      </div>
+                    </div>
+                  )
+                })
+              ) : (
+                <EmptyState
+                  title="No appointments"
+                  description="Your schedule is clear for this date."
+                />
+              )}
+            </div>
           </div>
         </div>
-      )}
-
-      {!loading && data && data.length === 0 && (
-        <EmptyState
-          title="No appointments"
-          description={`Your board is clear for ${date}.`}
-        />
-      )}
-
-      {!loading && !data && searched && !error && (
-        <EmptyState title="No data" description="Try selecting a different date." />
       )}
     </Layout>
   )

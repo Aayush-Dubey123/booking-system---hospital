@@ -1,111 +1,128 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
-import { useNavigate } from 'react-router-dom'
-import { bookAppointment } from '../../api/appointmentApi'
 import { getSchedule } from '../../api/schedule'
-import { useToast } from '../../components/Toast'
+import { bookAppointment } from '../../api/appointmentApi'
 import Layout from '../../components/Layout'
 import SlotChip from '../../components/SlotChip'
-import { Loader2, CheckCircle, CalendarPlus } from 'lucide-react'
+import PulseDivider from '../../components/PulseDivider'
+import { useToast } from '../../components/Toast'
+import { CheckCircle2, Loader2, Calendar } from 'lucide-react'
 
-const VALID_SLOTS = [
-  '10:00', '10:30', '11:00', '11:30', '12:00', '12:30',
-  '17:00', '17:30', '18:00', '18:30', '19:00', '19:30',
-]
+const USER_NAME = 'John Doe'
+const USER_INITIALS = 'JD'
 
-function getTodayStr() {
-  return new Date().toISOString().split('T')[0]
-}
-
-function getMaxDateStr() {
-  const d = new Date()
-  d.setDate(d.getDate() + 7)
-  return d.toISOString().split('T')[0]
+/* Flat doctor illustration (shared) */
+function DoctorArt() {
+  return (
+    <svg viewBox="0 0 220 230" style={{ width: '100%', height: 'auto', maxWidth: 190 }}>
+      <ellipse cx="110" cy="205" rx="90" ry="14" fill="#0A5646" opacity=".35" />
+      <rect x="30" y="70" width="60" height="60" rx="10" fill="#DCEEE8" />
+      <path d="M40 70 h40 v-6 a20 20 0 0 0 -40 0 z" fill="#F1D9C6" />
+      <circle cx="60" cy="55" r="20" fill="#F1D9C6" />
+      <path d="M42 50 a18 14 0 0 1 36 0" fill="#2A2018" />
+      <rect x="80" y="88" width="112" height="90" rx="14" fill="#0E6E5C" />
+      <circle cx="136" cy="70" r="22" fill="#F1D9C6" />
+      <path d="M116 66 a20 15 0 0 1 40 0" fill="#2A2018" />
+      <rect x="105" y="90" width="62" height="88" rx="12" fill="#FFFFFF" />
+      <rect x="118" y="108" width="36" height="6" rx="3" fill="#D9E5E0" />
+      <rect x="118" y="120" width="36" height="6" rx="3" fill="#D9E5E0" />
+      <rect x="118" y="132" width="22" height="6" rx="3" fill="#E1583F" />
+      <circle cx="70" cy="115" r="7" fill="none" stroke="#0A5646" strokeWidth="3" />
+      <path d="M70 122 v14 a10 10 0 0 0 10 10 h6" fill="none" stroke="#0A5646" strokeWidth="3" strokeLinecap="round" />
+      <circle cx="90" cy="147" r="5" fill="#E1583F" />
+    </svg>
+  )
 }
 
 export default function BookAppointment() {
   const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm()
+  const [slots, setSlots] = useState([])
   const [loading, setLoading] = useState(false)
-  const [success, setSuccess] = useState(null)
-  const [selectedSlot, setSelectedSlot] = useState('')
-  const [bookedSlots, setBookedSlots] = useState([])
-  const [scheduleLoading, setScheduleLoading] = useState(false)
-  const navigate = useNavigate()
+  const [submitting, setSubmitting] = useState(false)
+  const [success, setSuccess] = useState(false)
+  
+  // Real data for the dark side panel
+  const [availableCount, setAvailableCount] = useState(null)
+  const [totalSlots, setTotalSlots] = useState(null)
+  
   const toast = useToast()
 
-  const watchDate = watch('appointment_date')
+  const selectedDate = watch('appointment_date')
+  const selectedSlot = watch('slot')
+
+  useEffect(() => {
+    if (selectedDate) fetchSlots(selectedDate)
+  }, [selectedDate])
 
   const fetchSlots = async (date) => {
-    if (!date) return
-    setScheduleLoading(true)
+    setLoading(true)
+    setAvailableCount(null)
     try {
       const res = await getSchedule(date)
-      setBookedSlots(res.data.booked_slots ?? [])
-    } catch {
-      setBookedSlots([])
-    } finally {
-      setScheduleLoading(false)
-    }
-  }
-
-  const handleDateChange = (e) => {
-    setValue('appointment_date', e.target.value)
-    setSelectedSlot('')
-    fetchSlots(e.target.value)
-  }
-
-  const onSubmit = async (data) => {
-    if (!selectedSlot) { toast.error('Please select a slot.'); return }
-    setLoading(true)
-    try {
-      const res = await bookAppointment({
-        reason: data.reason,
-        symptoms: data.symptoms,
-        temperature: parseFloat(data.temperature),
-        appointment_date: data.appointment_date,
-        slot: selectedSlot,
-      })
-      setSuccess(res.data)
-      toast.success('Your appointment has been booked!', 'Booking Confirmed')
+      setSlots(res.data.free_slots || [])
+      setAvailableCount(res.data.available_count ?? 0)
+      setTotalSlots(res.data.total_slots ?? 12)
     } catch (err) {
-      toast.error(err.response?.data?.detail ?? 'Booking failed.')
+      toast.error('Failed to load slots for this date')
     } finally {
       setLoading(false)
     }
   }
 
+  const onSubmit = async (data) => {
+    if (!data.slot) {
+      toast.error('Please select an appointment time')
+      return
+    }
+    setSubmitting(true)
+    try {
+      await bookAppointment({
+        ...data,
+        temperature: parseFloat(data.temperature),
+      })
+      setSuccess(true)
+    } catch (err) {
+      toast.error(err.response?.data?.detail ?? 'Failed to book appointment')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
   if (success) {
     return (
-      <Layout>
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <div className="card max-w-sm w-full text-center shadow-md">
-            <div className="w-14 h-14 bg-emerald-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <CheckCircle className="w-7 h-7 text-emerald-600" />
+      <Layout title="Book Appointment">
+        <div className="page-head">
+          <div>
+            <h1>All set.</h1>
+            <p>Your appointment has been confirmed.</p>
+          </div>
+          <div className="profile-chip">
+            <div className="avatar">{USER_INITIALS}</div>
+            <span>{USER_NAME}</span>
+          </div>
+        </div>
+        <PulseDivider animKey="success" />
+
+        <div className="section-gap" style={{ maxWidth: 500, margin: '40px auto' }}>
+          <div className="panel" style={{ textAlign: 'center', padding: '40px 30px' }}>
+            <div style={{
+              width: 54, height: 54, borderRadius: '50%', background: 'var(--teal-tint)', color: 'var(--teal-deep)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px'
+            }}>
+              <CheckCircle2 size={26} strokeWidth={2.5} />
             </div>
-            <h2 className="text-xl font-bold text-slate-800 mb-1">Booking Confirmed!</h2>
-            <p className="text-slate-500 text-sm mb-5">Your appointment has been booked successfully.</p>
-            <div className="bg-slate-50 rounded-xl p-4 text-sm text-left space-y-2 mb-6">
-              <div className="flex justify-between">
-                <span className="text-slate-500">Date</span>
-                <span className="font-semibold text-slate-700">{success.appointment_date}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-500">Slot</span>
-                <span className="font-semibold text-slate-700">{success.slot}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-500">Status</span>
-                <span className="font-semibold text-emerald-600 capitalize">{success.status}</span>
-              </div>
-            </div>
-            <div className="flex gap-3">
-              <button onClick={() => navigate('/my-appointments')} className="btn-primary flex-1">
-                View My Appointments
-              </button>
-              <button onClick={() => { setSuccess(null); setSelectedSlot('') }} className="btn-secondary flex-1">
-                Book Another
-              </button>
-            </div>
+            <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 24, margin: '0 0 10px', color: 'var(--ink)' }}>
+              Appointment Booked
+            </h2>
+            <p style={{ color: 'var(--ink-soft)', margin: '0 0 24px' }}>
+              We've sent a confirmation to your email. We look forward to seeing you.
+            </p>
+            <button
+              onClick={() => { setSuccess(false); setValue('slot', '') }}
+              className="btn-cc-primary"
+            >
+              Book another
+            </button>
           </div>
         </div>
       </Layout>
@@ -114,104 +131,148 @@ export default function BookAppointment() {
 
   return (
     <Layout title="Book Appointment">
-      <div className="max-w-3xl mx-auto w-full animate-slide-in">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-slate-800 tracking-tight">Book Appointment</h1>
-          <p className="text-slate-500 mt-1">Schedule a visit with CityCare Clinic professionals</p>
+      <div className="page-head">
+        <div>
+          <h1>Book Appointment</h1>
+          <p>Schedule a visit with Dr. Amruta.</p>
         </div>
+        <div className="profile-chip">
+          <div className="avatar">{USER_INITIALS}</div>
+          <span>{USER_NAME}</span>
+        </div>
+      </div>
+      
+      <PulseDivider animKey="book" />
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-          <div className="card shadow-sm border-0 bg-white p-8">
-            <h2 className="font-semibold text-slate-800 text-lg mb-6 flex items-center gap-2 pb-4 border-b border-slate-100">
-              <CalendarPlus className="w-5 h-5 text-blue-500" />
-              Appointment Details
-            </h2>
+      <div className="section-gap" style={{ display: 'grid', gridTemplateColumns: '1.3fr 0.7fr', gap: '16px', alignItems: 'start' }}
+        className="max-lg:grid-cols-1 max-lg:!grid"
+      >
+        {/* Left column — Form */}
+        <form onSubmit={handleSubmit(onSubmit)} className="panel">
+          <div className="panel-head">
+            <div className="t">
+              <Calendar size={18} />
+              <h2>Appointment details</h2>
+            </div>
+          </div>
+          <div className="panel-body">
+            <div className="cc-field">
+              <label htmlFor="appointment_date">Date</label>
+              <input
+                id="appointment_date"
+                type="date"
+                min={new Date().toISOString().split('T')[0]}
+                {...register('appointment_date', { required: 'Date is required' })}
+              />
+              {errors.appointment_date && <p className="auth-error">{errors.appointment_date.message}</p>}
+            </div>
 
-            <div className="space-y-6">
-              <div>
-                <label htmlFor="book-date" className="label">Date</label>
-                <input
-                  id="book-date"
-                  type="date"
-                  min={getTodayStr()}
-                  max={getMaxDateStr()}
-                  className={`input ${errors.appointment_date ? 'input-error' : ''}`}
-                  {...register('appointment_date', { required: 'Date is required' })}
-                  onChange={handleDateChange}
-                />
-                {errors.appointment_date && <p className="text-red-500 text-xs mt-1">{errors.appointment_date.message}</p>}
-              </div>
-
-              {watchDate && (
-                <div>
-                  <label className="label">
-                    Select a Slot
-                    {scheduleLoading && <span className="text-xs text-slate-400 ml-2">Loading...</span>}
-                  </label>
-                  <div className="flex flex-wrap gap-2 mt-1">
-                    {VALID_SLOTS.map((slot) => (
+            {selectedDate && (
+              <div className="cc-field" style={{ marginTop: 22 }}>
+                <label>Available times</label>
+                {loading ? (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--ink-soft)', fontSize: 14 }}>
+                    <Loader2 size={16} className="animate-spin" /> Loading slots…
+                  </div>
+                ) : slots.length > 0 ? (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
+                    {slots.map((slot) => (
                       <SlotChip
                         key={slot}
-                        slot={slot}
+                        time={slot}
                         selected={selectedSlot === slot}
-                        taken={bookedSlots.includes(slot)}
-                        onClick={() => setSelectedSlot(slot)}
+                        onClick={() => setValue('slot', slot)}
                       />
                     ))}
                   </div>
-                  {!selectedSlot && <p className="text-slate-400 text-xs mt-2">Click an available slot to select it</p>}
-                </div>
-              )}
-
-              <div>
-                <label htmlFor="book-reason" className="label">Reason for Visit</label>
-                <input
-                  id="book-reason"
-                  className={`input ${errors.reason ? 'input-error' : ''}`}
-                  placeholder="e.g. Fever, headache"
-                  {...register('reason', { required: 'Reason is required' })}
-                />
-                {errors.reason && <p className="text-red-500 text-xs mt-1">{errors.reason.message}</p>}
+                ) : (
+                  <p style={{ color: 'var(--pulse-deep)', fontSize: 13.5, margin: 0, padding: '12px 16px', background: 'var(--pulse-tint)', borderRadius: 'var(--radius-ctrl)' }}>
+                    No slots available for this date.
+                  </p>
+                )}
               </div>
+            )}
 
-              <div>
-                <label htmlFor="book-symptoms" className="label">Symptoms</label>
-                <textarea
-                  id="book-symptoms"
-                  rows={3}
-                  className={`input resize-none ${errors.symptoms ? 'input-error' : ''}`}
-                  placeholder="Describe your symptoms..."
-                  {...register('symptoms', { required: 'Symptoms are required' })}
-                />
-                {errors.symptoms && <p className="text-red-500 text-xs mt-1">{errors.symptoms.message}</p>}
-              </div>
+            <div className="cc-field" style={{ marginTop: 22 }}>
+              <label htmlFor="reason">Reason for visit</label>
+              <input
+                id="reason"
+                placeholder="e.g. Annual checkup"
+                {...register('reason', { required: 'Reason is required' })}
+              />
+              {errors.reason && <p className="auth-error">{errors.reason.message}</p>}
+            </div>
 
-              <div>
-                <label htmlFor="book-temperature" className="label">Temperature (°C)</label>
-                <input
-                  id="book-temperature"
-                  type="number"
-                  step="0.1"
-                  className={`input ${errors.temperature ? 'input-error' : ''}`}
-                  placeholder="e.g. 37.2"
-                  {...register('temperature', {
-                    required: 'Temperature is required',
-                    min: { value: 35, message: 'Must be ≥ 35°C' },
-                    max: { value: 42, message: 'Must be ≤ 42°C' },
-                  })}
-                />
-                {errors.temperature && <p className="text-red-500 text-xs mt-1">{errors.temperature.message}</p>}
-              </div>
+            <div className="cc-field" style={{ marginTop: 22 }}>
+              <label htmlFor="symptoms">Symptoms (optional)</label>
+              <textarea
+                id="symptoms"
+                placeholder="Briefly describe what you're experiencing…"
+                {...register('symptoms')}
+              />
+            </div>
+
+            <div className="cc-field" style={{ marginTop: 22 }}>
+              <label htmlFor="temperature">Current Temperature (°F)</label>
+              <input
+                id="temperature"
+                type="number"
+                step="0.1"
+                placeholder="98.6"
+                {...register('temperature', {
+                  required: 'Temperature is required',
+                  min: { value: 90, message: 'Invalid temperature' },
+                  max: { value: 110, message: 'Invalid temperature' },
+                })}
+              />
+              {errors.temperature && <p className="auth-error">{errors.temperature.message}</p>}
+            </div>
+
+            <div style={{ marginTop: 32, paddingTop: 20, borderTop: '1px solid var(--line)' }}>
+              <button type="submit" disabled={submitting} className="btn-cc-primary">
+                {submitting ? <Loader2 size={16} className="animate-spin" /> : (
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 17, height: 17 }}>
+                    <path d="M5 12h14M13 6l6 6-6 6" />
+                  </svg>
+                )}
+                {submitting ? 'Booking…' : 'Confirm appointment'}
+              </button>
             </div>
           </div>
-
-          <div className="pt-4">
-            <button type="submit" disabled={loading || !selectedSlot} className="btn-primary w-full py-3.5 text-base shadow-lg shadow-blue-500/20">
-              {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : null}
-              {loading ? 'Processing...' : 'Confirm Booking'}
-            </button>
-          </div>
         </form>
+
+        {/* Right column — Dark panel (Free slots) */}
+        <div className="panel" style={{ background: 'var(--ink)', color: '#fff', border: 'none', padding: '38px 30px', textAlign: 'center', position: 'sticky', top: 90 }}>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 24 }}>
+            <DoctorArt />
+          </div>
+          <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 500, margin: '0 0 16px' }}>
+            Free slots today
+          </h3>
+          {selectedDate ? (
+            loading ? (
+              <div className="skeleton-num" style={{ margin: '0 auto 8px' }} />
+            ) : (
+              <>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 48, fontWeight: 600, lineHeight: 1, margin: '0 0 6px', color: '#fff' }}>
+                  {availableCount}
+                </div>
+                <div style={{ fontSize: 13, color: '#B8D3CC' }}>
+                  Out of {totalSlots} slots
+                </div>
+              </>
+            )
+          ) : (
+            <>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 48, fontWeight: 600, lineHeight: 1, margin: '0 0 6px', color: '#fff', opacity: 0.5 }}>
+                —
+              </div>
+              <div style={{ fontSize: 13, color: '#B8D3CC' }}>
+                Select a date to see availability
+              </div>
+            </>
+          )}
+        </div>
       </div>
     </Layout>
   )
