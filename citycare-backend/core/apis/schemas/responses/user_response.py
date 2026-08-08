@@ -1,4 +1,5 @@
 from datetime import datetime,date
+from typing import Optional
 from pydantic import BaseModel, EmailStr
 
 
@@ -15,6 +16,7 @@ class UserResponse(BaseModel):
 class UserLoginResponse(BaseModel):
     access_token: str
     role: str
+    hospital_id: Optional[str] = None
 
 
 class AppointmentResponse(BaseModel):

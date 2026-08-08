@@ -75,6 +75,7 @@ class UserController:
             return {
                 "access_token": access_token,
                 "role": user.role,
+                "hospital_id": user.hospital_id,
             }
 
         except HTTPException:

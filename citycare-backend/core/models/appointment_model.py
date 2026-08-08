@@ -1,5 +1,5 @@
 from datetime import date, datetime
-from typing import Annotated
+from typing import Annotated, Optional
 
 from odmantic import Model, WithBsonSerializer
 
@@ -15,6 +15,8 @@ DateField = Annotated[
 
 class Appointment(Model):
     patient_id: str
+    hospital_id: Optional[str] = None
+    doctor_id: Optional[str] = None
     reason: str
     symptoms: str
     temperature: float

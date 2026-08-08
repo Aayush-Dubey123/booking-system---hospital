@@ -43,29 +43,6 @@ export default function Layout({ children, title = 'Overview' }) {
 
       {/* Main content */}
       <main style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
-        {/* Mobile top bar */}
-        <div
-          className="lg:hidden"
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '12px',
-            padding: '12px 16px',
-            background: 'var(--surface)',
-            borderBottom: '1px solid var(--line)',
-            position: 'sticky',
-            top: 0,
-            zIndex: 30,
-          }}
-        >
-          <button
-            onClick={() => setMobileOpen(true)}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-soft)', display: 'flex' }}
-          >
-            <Menu size={20} />
-          </button>
-          <span style={{ fontWeight: 700, fontSize: '14px', color: 'var(--ink)' }}>CityCare</span>
-        </div>
 
         {/* Page content */}
         <div style={{ padding: '32px 40px 60px', flex: 1, maxWidth: '1220px', width: '100%' }}

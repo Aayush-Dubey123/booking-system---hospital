@@ -17,6 +17,10 @@ import Schedule from './pages/patient/Schedule'
 import DoctorDashboard from './pages/doctor/DoctorDashboard'
 import DoctorSchedule from './pages/doctor/DoctorSchedule'
 
+// Owner/Admin pages
+import OwnerDashboard from './pages/owner/OwnerDashboard'
+import SuperadminDashboard from './pages/admin/SuperadminDashboard'
+
 export default function App() {
   return (
     <BrowserRouter>
@@ -58,6 +62,20 @@ export default function App() {
             <Route path="/doctor/schedule" element={
               <ProtectedRoute allowedRoles={['doctor']}>
                 <DoctorSchedule />
+              </ProtectedRoute>
+            } />
+
+            {/* Owner routes */}
+            <Route path="/owner/dashboard" element={
+              <ProtectedRoute allowedRoles={['owner']}>
+                <OwnerDashboard />
+              </ProtectedRoute>
+            } />
+
+            {/* Admin routes */}
+            <Route path="/admin/dashboard" element={
+              <ProtectedRoute allowedRoles={['superadmin']}>
+                <SuperadminDashboard />
               </ProtectedRoute>
             } />
 

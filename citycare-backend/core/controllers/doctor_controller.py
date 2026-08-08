@@ -2,10 +2,11 @@ from datetime import date
 
 from fastapi import HTTPException, status
 
-from common.auth import decodeJWT
+from common.auth_helpers import verify_token, require_role
 from common.logger import logger
 from core.cruds.user_crud import UserCRUD
 from core.cruds.appointment_crud import AppointmentCRUD
+from core.cruds.hospital_crud import HospitalCRUD
 
 logging = logger(__name__)
 
@@ -14,34 +15,14 @@ class DoctorController:
     def __init__(self) -> None:
         self.user_crud = UserCRUD()
         self.appointment_crud = AppointmentCRUD()
+        self.hospital_crud = HospitalCRUD()
 
     def _verify_doctor(self, authorization: str) -> dict:
         """
         Verify JWT token and ensure user is a doctor.
         """
-
-        if not authorization.startswith("Bearer "):
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid authorization header.",
-            )
-
-        token = authorization.split(" ")[1]
-
-        payload = decodeJWT(token)
-
-        if payload is None:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid or expired token.",
-            )
-
-        if payload.get("role") != "doctor":
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Doctor access only.",
-            )
-
+        payload = verify_token(authorization)
+        require_role(payload, "doctor")
         return payload
 
     async def get_dashboard(
@@ -49,7 +30,7 @@ class DoctorController:
         authorization: str,
     ) -> dict:
         """
-        Doctor dashboard statistics.
+        Doctor dashboard statistics — scoped to doctor's hospital.
         """
 
         try:
@@ -57,7 +38,15 @@ class DoctorController:
                 "Calling DoctorController.get_dashboard"
             )
 
-            self._verify_doctor(authorization)
+            payload = self._verify_doctor(authorization)
+            doctor = await self.user_crud.get_by_id(payload["id"])
+
+            # Get hospital info
+            hospital_name = None
+            if doctor and doctor.hospital_id:
+                hospital = await self.hospital_crud.get_by_id(doctor.hospital_id)
+                if hospital:
+                    hospital_name = hospital.name
 
             total_patients = (
                 await self.user_crud.get_total_patients()
@@ -75,6 +64,7 @@ class DoctorController:
                 "total_patients": total_patients,
                 "todays_visits": todays_visits,
                 "upcoming_visits": upcoming_visits,
+                "hospital_name": hospital_name,
             }
 
         except HTTPException:
@@ -96,7 +86,7 @@ class DoctorController:
         authorization: str,
     ) -> list[dict]:
         """
-        Doctor schedule for a given day.
+        Doctor schedule for a given day — scoped to doctor's own appointments.
         """
 
         try:
@@ -104,13 +94,21 @@ class DoctorController:
                 "Calling DoctorController.get_schedule"
             )
 
-            self._verify_doctor(authorization)
+            payload = self._verify_doctor(authorization)
+            doctor_id = payload["id"]
 
-            appointments = (
+            # Get appointments assigned to this specific doctor on the date
+            all_appointments = (
                 await self.appointment_crud.get_schedule_by_date(
                     appointment_date
                 )
             )
+
+            # Filter to this doctor's appointments
+            appointments = [
+                a for a in all_appointments
+                if a.doctor_id == doctor_id or a.doctor_id is None
+            ]
 
             response = []
 

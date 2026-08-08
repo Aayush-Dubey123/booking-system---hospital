@@ -6,14 +6,34 @@ from fastapi.openapi.utils import get_openapi
 from core.apis.routes.doctor_router import doctor_router
 from core.apis.routes.auth_router import auth_router
 from core.apis.routes.user_router import user_router
+from core.apis.routes.hospital_router import hospital_router
+from core.apis.routes.superadmin_router import superadmin_router
 from core.database.database import (
     connect_to_mongo,
     close_mongo_connection,
+    get_engine,
 )
+from core.models.user_model import User
+from common.auth import encrypt_password
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await connect_to_mongo()
+    
+    # Auto-seed superadmin
+    engine = get_engine()
+    existing = await engine.find_one(User, User.email == "superadmin@citycare.com")
+    if not existing:
+        superadmin = User(
+            first_name="Super",
+            last_name="Admin",
+            email="superadmin@citycare.com",
+            password=encrypt_password("admin1234"),
+            role="superadmin",
+            status="active"
+        )
+        await engine.save(superadmin)
+
     yield
     await close_mongo_connection()
 
@@ -38,6 +58,8 @@ app.add_middleware(
 app.include_router(auth_router, tags=["Authentication"])
 app.include_router(user_router, tags=["Patient"])
 app.include_router(doctor_router, tags=["Doctor"])
+app.include_router(hospital_router, tags=["Hospital"])
+app.include_router(superadmin_router, tags=["Superadmin"])
 
 @app.get("/")
 async def root():

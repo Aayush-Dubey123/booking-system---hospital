@@ -10,7 +10,11 @@ export default function ProtectedRoute({ children, allowedRoles }) {
 
   if (allowedRoles && !allowedRoles.includes(role)) {
     // Redirect to the correct dashboard based on role
-    const fallback = role === 'doctor' ? '/doctor/dashboard' : '/dashboard'
+    let fallback = '/dashboard'
+    if (role === 'doctor') fallback = '/doctor/dashboard'
+    else if (role === 'owner') fallback = '/owner/dashboard'
+    else if (role === 'superadmin') fallback = '/admin/dashboard'
+    
     return <Navigate to={fallback} replace />
   }
 

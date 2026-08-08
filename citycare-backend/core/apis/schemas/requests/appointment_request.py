@@ -1,8 +1,14 @@
 from datetime import date
+from typing import Optional
 from pydantic import BaseModel, Field
 
 
 class AppointmentRequest(BaseModel):
+    hospital_id: str = Field(
+        ...,
+        description="Hospital to book the appointment at."
+    )
+
     reason: str = Field(
         ...,
         description="Reason for booking the appointment."

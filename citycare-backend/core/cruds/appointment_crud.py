@@ -187,3 +187,70 @@ class AppointmentCRUD:
         except Exception as error:
             logging.error(f"Error fetching booked slots: {error}")
             raise
+
+    async def get_appointments_by_hospital(
+        self,
+        hospital_id: str,
+    ) -> list[Appointment]:
+        try:
+            logging.info(f"Fetching appointments for hospital: {hospital_id}")
+            return await self.engine.find(
+                Appointment,
+                Appointment.hospital_id == hospital_id,
+            )
+        except Exception as error:
+            logging.error(f"Error fetching hospital appointments: {error}")
+            raise
+
+    async def get_appointments_by_doctor(
+        self,
+        doctor_id: str,
+    ) -> list[Appointment]:
+        try:
+            logging.info(f"Fetching appointments for doctor: {doctor_id}")
+            return await self.engine.find(
+                Appointment,
+                Appointment.doctor_id == doctor_id,
+            )
+        except Exception as error:
+            logging.error(f"Error fetching doctor appointments: {error}")
+            raise
+
+    async def get_appointments_by_hospital_and_date(
+        self,
+        hospital_id: str,
+        appointment_date: date,
+    ) -> list[Appointment]:
+        try:
+            logging.info(
+                f"Fetching appointments for hospital {hospital_id} on {appointment_date}"
+            )
+            appointment_datetime = _date_to_datetime(appointment_date)
+            return await self.engine.find(
+                Appointment,
+                (Appointment.hospital_id == hospital_id)
+                & (Appointment.appointment_date == appointment_datetime),
+            )
+        except Exception as error:
+            logging.error(f"Error fetching hospital-date appointments: {error}")
+            raise
+
+    async def get_doctor_booked_slots_on_date(
+        self,
+        doctor_id: str,
+        appointment_date: date,
+    ) -> list[str]:
+        try:
+            logging.info(
+                f"Fetching booked slots for doctor {doctor_id} on {appointment_date}"
+            )
+            appointment_datetime = _date_to_datetime(appointment_date)
+            appointments = await self.engine.find(
+                Appointment,
+                (Appointment.doctor_id == doctor_id)
+                & (Appointment.appointment_date == appointment_datetime),
+            )
+            return [a.slot for a in appointments]
+        except Exception as error:
+            logging.error(f"Error fetching doctor booked slots: {error}")
+            raise

@@ -13,9 +13,19 @@ export default function Login() {
   const toast = useToast()
   const navigate = useNavigate()
 
+  // Helper to determine redirect path
+  const getDashboardPath = (userRole) => {
+    switch(userRole) {
+      case 'doctor': return '/doctor/dashboard'
+      case 'owner': return '/owner/dashboard'
+      case 'superadmin': return '/admin/dashboard'
+      default: return '/dashboard'
+    }
+  }
+
   // If already authenticated, redirect
   if (isAuthenticated) {
-    const target = role === 'doctor' ? '/doctor/dashboard' : '/dashboard'
+    const target = getDashboardPath(role)
     navigate(target, { replace: true })
     return null
   }
@@ -23,13 +33,9 @@ export default function Login() {
   const onSubmit = async (data) => {
     setLoading(true)
     try {
-      const userRole = await login(data)
+      const result = await login(data)
       toast.success('Welcome back!', 'Login Successful')
-      if (userRole === 'doctor') {
-        navigate('/doctor/dashboard')
-      } else {
-        navigate('/dashboard')
-      }
+      navigate(getDashboardPath(result.role))
     } catch (err) {
       toast.error(
         err.response?.data?.detail ?? 'Login failed. Please try again.'

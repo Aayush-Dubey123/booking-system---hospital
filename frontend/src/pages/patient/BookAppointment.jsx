@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { getSchedule } from '../../api/schedule'
 import { bookAppointment } from '../../api/appointmentApi'
+import { getHospitals } from '../../api/hospitalApi'
 import Layout from '../../components/Layout'
 import SlotChip from '../../components/SlotChip'
 import PulseDivider from '../../components/PulseDivider'
@@ -37,7 +38,9 @@ function DoctorArt() {
 export default function BookAppointment() {
   const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm()
   const [slots, setSlots] = useState([])
+  const [hospitals, setHospitals] = useState([])
   const [loading, setLoading] = useState(false)
+  const [loadingHospitals, setLoadingHospitals] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [success, setSuccess] = useState(false)
   
@@ -49,16 +52,36 @@ export default function BookAppointment() {
 
   const selectedDate = watch('appointment_date')
   const selectedSlot = watch('slot')
+  const selectedHospital = watch('hospital_id')
 
   useEffect(() => {
-    if (selectedDate) fetchSlots(selectedDate)
-  }, [selectedDate])
+    const fetchHospitalsList = async () => {
+      try {
+        const res = await getHospitals()
+        setHospitals(res.data)
+      } catch (err) {
+        toast.error('Failed to load hospitals')
+      } finally {
+        setLoadingHospitals(false)
+      }
+    }
+    fetchHospitalsList()
+  }, [])
 
-  const fetchSlots = async (date) => {
+  useEffect(() => {
+    if (selectedDate && selectedHospital) {
+      fetchSlots(selectedDate, selectedHospital)
+    } else {
+      setSlots([])
+      setAvailableCount(null)
+    }
+  }, [selectedDate, selectedHospital])
+
+  const fetchSlots = async (date, hospitalId) => {
     setLoading(true)
     setAvailableCount(null)
     try {
-      const res = await getSchedule(date)
+      const res = await getSchedule(date, hospitalId)
       setSlots(res.data.free_slots || [])
       setAvailableCount(res.data.available_count ?? 0)
       setTotalSlots(res.data.total_slots ?? 12)
@@ -154,7 +177,22 @@ export default function BookAppointment() {
             </div>
           </div>
           <div className="panel-body">
+            
             <div className="cc-field">
+              <label htmlFor="hospital_id">Hospital</label>
+              <select
+                id="hospital_id"
+                {...register('hospital_id', { required: 'Hospital is required' })}
+              >
+                <option value="">Select a hospital...</option>
+                {hospitals.map(h => (
+                  <option key={h.id} value={h.id}>{h.name}</option>
+                ))}
+              </select>
+              {errors.hospital_id && <p className="auth-error">{errors.hospital_id.message}</p>}
+            </div>
+
+            <div className="cc-field" style={{ marginTop: 22 }}>
               <label htmlFor="appointment_date">Date</label>
               <input
                 id="appointment_date"
@@ -165,7 +203,7 @@ export default function BookAppointment() {
               {errors.appointment_date && <p className="auth-error">{errors.appointment_date.message}</p>}
             </div>
 
-            {selectedDate && (
+            {selectedDate && selectedHospital && (
               <div className="cc-field" style={{ marginTop: 22 }}>
                 <label>Available times</label>
                 {loading ? (
