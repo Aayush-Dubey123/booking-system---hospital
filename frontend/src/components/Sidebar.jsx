@@ -62,7 +62,7 @@ export default function Sidebar({ onClose }) {
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 px-3 py-2 space-y-1">
+      <nav className="flex-1 px-4 py-4 space-y-1.5">
         {navItems.map(({ to, label, icon: Icon }) => {
           const active = location.pathname === to
           return (
@@ -70,13 +70,16 @@ export default function Sidebar({ onClose }) {
               key={to}
               to={to}
               onClick={onClose}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150
+              className={`relative flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-medium transition-all duration-200
                 ${active
-                  ? 'bg-blue-600 text-white shadow-sm'
-                  : 'text-slate-600 hover:bg-blue-50 hover:text-blue-700'
+                  ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20'
+                  : 'text-slate-500 hover:bg-slate-50 hover:text-blue-700'
                 }`}
             >
-              <Icon className="w-4 h-4" />
+              {active && (
+                 <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-white rounded-r-md"></div>
+              )}
+              <Icon className={`w-5 h-5 ${active ? 'text-white' : 'text-slate-400 group-hover:text-blue-500'}`} />
               {label}
             </Link>
           )
@@ -88,9 +91,9 @@ export default function Sidebar({ onClose }) {
         <Link
           to="/login"
           onClick={handleLogout}
-          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-500 hover:bg-red-50 hover:text-red-600 transition-all duration-150"
+          className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-medium text-slate-500 hover:bg-red-50 hover:text-red-600 transition-all duration-200"
         >
-          <LogOut className="w-4 h-4" />
+          <LogOut className="w-5 h-5 text-slate-400" />
           Logout
         </Link>
       </div>

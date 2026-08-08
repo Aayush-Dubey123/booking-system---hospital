@@ -113,21 +113,21 @@ export default function BookAppointment() {
   }
 
   return (
-    <Layout>
-      <div className="max-w-2xl mx-auto w-full">
-        <div className="mb-7">
-          <h1 className="text-2xl font-bold text-slate-800">Book Appointment</h1>
-          <p className="text-slate-500 text-sm mt-0.5">Schedule a visit with CityCare Clinic</p>
+    <Layout title="Book Appointment">
+      <div className="max-w-3xl mx-auto w-full animate-slide-in">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-slate-800 tracking-tight">Book Appointment</h1>
+          <p className="text-slate-500 mt-1">Schedule a visit with CityCare Clinic professionals</p>
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-          <div className="card">
-            <h2 className="font-semibold text-slate-700 mb-4 flex items-center gap-2">
-              <CalendarPlus className="w-4 h-4 text-blue-500" />
+          <div className="card shadow-sm border-0 bg-white p-8">
+            <h2 className="font-semibold text-slate-800 text-lg mb-6 flex items-center gap-2 pb-4 border-b border-slate-100">
+              <CalendarPlus className="w-5 h-5 text-blue-500" />
               Appointment Details
             </h2>
 
-            <div className="space-y-4">
+            <div className="space-y-6">
               <div>
                 <label htmlFor="book-date" className="label">Date</label>
                 <input
@@ -205,10 +205,12 @@ export default function BookAppointment() {
             </div>
           </div>
 
-          <button type="submit" disabled={loading || !selectedSlot} className="btn-primary w-full">
-            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-            {loading ? 'Booking...' : 'Confirm Booking'}
-          </button>
+          <div className="pt-4">
+            <button type="submit" disabled={loading || !selectedSlot} className="btn-primary w-full py-3.5 text-base shadow-lg shadow-blue-500/20">
+              {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : null}
+              {loading ? 'Processing...' : 'Confirm Booking'}
+            </button>
+          </div>
         </form>
       </div>
     </Layout>

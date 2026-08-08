@@ -32,8 +32,8 @@ export default function MyAppointments() {
   useEffect(() => { fetchData() }, [])
 
   return (
-    <Layout>
-      <div className="flex items-center justify-between mb-7">
+    <Layout title="My Appointments">
+      <div className="flex items-center justify-between mb-7 lg:hidden">
         <div>
           <h1 className="text-2xl font-bold text-slate-800">My Appointments</h1>
           <p className="text-slate-500 text-sm mt-0.5">All your scheduled visits</p>
