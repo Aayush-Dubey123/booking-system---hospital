@@ -12,6 +12,7 @@ import Dashboard from './pages/patient/Dashboard'
 import BookAppointment from './pages/patient/BookAppointment'
 import MyAppointments from './pages/patient/MyAppointments'
 import Schedule from './pages/patient/Schedule'
+import ChatBot from './pages/patient/ChatBot'
 
 // Doctor pages
 import DoctorDashboard from './pages/doctor/DoctorDashboard'
@@ -50,6 +51,11 @@ export default function App() {
             <Route path="/schedule" element={
               <ProtectedRoute allowedRoles={['patient']}>
                 <Schedule />
+              </ProtectedRoute>
+            } />
+            <Route path="/chatbot" element={
+              <ProtectedRoute allowedRoles={['patient']}>
+                <ChatBot />
               </ProtectedRoute>
             } />
 
