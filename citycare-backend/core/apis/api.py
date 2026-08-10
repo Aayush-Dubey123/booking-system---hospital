@@ -20,10 +20,11 @@ from common.auth import encrypt_password
 async def lifespan(app: FastAPI):
     await connect_to_mongo()
     
-    # Auto-seed superadmin
     engine = get_engine()
-    existing = await engine.find_one(User, User.email == "superadmin@citycare.com")
-    if not existing:
+
+    # ── Auto-seed superadmin ───────────────────────────────────────────────
+    existing_admin = await engine.find_one(User, User.email == "superadmin@citycare.com")
+    if not existing_admin:
         superadmin = User(
             first_name="Super",
             last_name="Admin",
@@ -33,6 +34,38 @@ async def lifespan(app: FastAPI):
             status="active"
         )
         await engine.save(superadmin)
+
+    # ── Auto-seed doctor1@example.com → citycare-ngp hospital ─────────────
+    from core.models.hospital_model import Hospital
+    existing_doctor = await engine.find_one(User, User.email == "doctor1@example.com")
+    if not existing_doctor:
+        # Find the hospital whose name contains 'ngp' (case-insensitive)
+        all_hospitals = await engine.find(Hospital)
+        target_hospital = next(
+            (h for h in all_hospitals if "ngp" in h.name.lower()), None
+        )
+        if target_hospital:
+            doctor = User(
+                first_name="Doctor",
+                last_name="One",
+                email="doctor1@example.com",
+                password=encrypt_password("pass-ADAYUSH1"),
+                role="doctor",
+                status="active",
+                hospital_id=str(target_hospital.id),
+            )
+            await engine.save(doctor)
+    else:
+        # If doctor exists but hospital_id is missing, assign to ngp hospital
+        if not existing_doctor.hospital_id:
+            from core.models.hospital_model import Hospital
+            all_hospitals = await engine.find(Hospital)
+            target_hospital = next(
+                (h for h in all_hospitals if "ngp" in h.name.lower()), None
+            )
+            if target_hospital:
+                existing_doctor.hospital_id = str(target_hospital.id)
+                await engine.save(existing_doctor)
 
     yield
     await close_mongo_connection()

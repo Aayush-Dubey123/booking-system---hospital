@@ -4,10 +4,8 @@ import Layout from '../../components/Layout'
 import MetricTile from '../../components/MetricTile'
 import PulseDivider from '../../components/PulseDivider'
 import ErrorBanner from '../../components/ErrorBanner'
-import { Users, CalendarDays, CalendarClock } from 'lucide-react'
-
-const DOCTOR_NAME = 'Dr. Amruta'
-const DOCTOR_INITIALS = 'AM'
+import { useAuth } from '../../context/AuthContext'
+import { Users, CalendarDays, CalendarClock, Calendar } from 'lucide-react'
 
 /* Shared flat doctor illustration */
 function DoctorArt() {
@@ -33,6 +31,7 @@ function DoctorArt() {
 }
 
 export default function DoctorDashboard() {
+  const { token } = useAuth()
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -54,8 +53,11 @@ export default function DoctorDashboard() {
     fetchDashboard()
   }, [])
 
+  const doctorName = 'Dr. Doctor One'
+  const doctorInitials = 'D1'
+  const hospitalName = data?.hospital_name ?? 'Your Hospital'
   const todaysVisits = data?.todays_visits ?? null
-  const upcomingVisits = data?.upcoming_visits ?? null
+  const appointments = data?.appointments ?? []
 
   return (
     <Layout title="Dashboard">
@@ -64,13 +66,17 @@ export default function DoctorDashboard() {
       <div className="page-head">
         <div>
           <h1>Dashboard</h1>
-          <p>Clinic overview and patient statistics.</p>
+          <p>
+            {data?.hospital_name
+              ? `${data.hospital_name} — clinic overview and patient statistics.`
+              : 'Clinic overview and patient statistics.'}
+          </p>
         </div>
         <div className="profile-chip">
           <div className="avatar" style={{ background: 'var(--pulse-tint)', color: 'var(--pulse-deep)' }}>
-            {DOCTOR_INITIALS}
+            {doctorInitials}
           </div>
-          <span>{DOCTOR_NAME}</span>
+          <span>{doctorName}</span>
         </div>
       </div>
 
@@ -84,10 +90,10 @@ export default function DoctorDashboard() {
             </svg>
             {new Date().toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long' })}
           </div>
-          <h2>Good morning, {DOCTOR_NAME}</h2>
+          <h2>Good morning, {doctorName}</h2>
           <p>
             {todaysVisits != null
-              ? `You have ${todaysVisits} patient${todaysVisits !== 1 ? 's' : ''} scheduled for today.`
+              ? `You have ${todaysVisits} patient${todaysVisits !== 1 ? 's' : ''} scheduled for today at ${hospitalName}.`
               : 'Loading your schedule…'}
           </p>
           <div className="hero-pills">
@@ -95,6 +101,11 @@ export default function DoctorDashboard() {
               <span className="dot" />
               Doctor
             </div>
+            {data?.hospital_name && (
+              <div className="role-badge" style={{ margin: 0, padding: '8px 14px', fontSize: 13, background: 'var(--teal-tint)', color: 'var(--teal-deep)' }}>
+                🏥 {data.hospital_name}
+              </div>
+            )}
           </div>
         </div>
         <div className="hero-art">
@@ -121,6 +132,43 @@ export default function DoctorDashboard() {
           icon={CalendarClock}
           variant="amber"
         />
+      </div>
+
+      {/* Appointments for this hospital */}
+      <div className="panel section-gap">
+        <div className="panel-head">
+          <div className="t">
+            <Calendar size={18} />
+            <h2>Hospital Appointments ({appointments.length})</h2>
+          </div>
+        </div>
+        <div className="panel-body">
+          {loading ? (
+            <p style={{ color: 'var(--ink-soft)' }}>Loading appointments…</p>
+          ) : appointments.length === 0 ? (
+            <p style={{ color: 'var(--ink-soft)' }}>No appointments found for this hospital yet.</p>
+          ) : (
+            <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {appointments.map(a => (
+                <li key={a.id} style={{ padding: 12, border: '1px solid var(--line)', borderRadius: 8 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <div>
+                      <div style={{ fontWeight: 500, color: 'var(--ink)' }}>
+                        {a.appointment_date} at {a.slot}
+                      </div>
+                      <div style={{ fontSize: 13, color: 'var(--ink-soft)', marginTop: 4 }}>
+                        Patient: {a.patient_name}<br />
+                        Doctor: {a.doctor_name || 'Pending Assignment'}<br />
+                        Reason: {a.reason}
+                      </div>
+                    </div>
+                    <span className={`status-badge ${a.status}`}>{a.status}</span>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       </div>
     </Layout>
   )

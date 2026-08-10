@@ -31,6 +31,7 @@ class DoctorController:
     ) -> dict:
         """
         Doctor dashboard statistics — scoped to doctor's hospital.
+        Returns hospital-scoped today's/upcoming visits + full appointment list.
         """
 
         try:
@@ -41,30 +42,76 @@ class DoctorController:
             payload = self._verify_doctor(authorization)
             doctor = await self.user_crud.get_by_id(payload["id"])
 
-            # Get hospital info
             hospital_name = None
+            hospital_id = None
+
             if doctor and doctor.hospital_id:
-                hospital = await self.hospital_crud.get_by_id(doctor.hospital_id)
+                hospital_id = doctor.hospital_id
+                hospital = await self.hospital_crud.get_by_id(hospital_id)
                 if hospital:
                     hospital_name = hospital.name
 
-            total_patients = (
-                await self.user_crud.get_total_patients()
-            )
+            # ── Stats scoped to the doctor's hospital ──────────────────────
+            total_patients = await self.user_crud.get_total_patients()
 
-            todays_visits = (
-                await self.appointment_crud.get_todays_visits()
-            )
+            if hospital_id:
+                # Hospital appointments list
+                raw_appointments = await self.appointment_crud.get_appointments_by_hospital(
+                    hospital_id
+                )
 
-            upcoming_visits = (
-                await self.appointment_crud.get_upcoming_visits()
-            )
+                today = date.today()
+
+                todays_visits = sum(
+                    1 for a in raw_appointments
+                    if a.appointment_date == today
+                )
+                upcoming_visits = sum(
+                    1 for a in raw_appointments
+                    if a.appointment_date > today
+                )
+
+                # Build enriched appointment list
+                appointments = []
+                for appt in raw_appointments:
+                    patient = await self.user_crud.get_by_id(appt.patient_id)
+                    patient_name = (
+                        f"{patient.first_name} {patient.last_name}"
+                        if patient
+                        else "Unknown Patient"
+                    )
+                    doctor_name = None
+                    if appt.doctor_id:
+                        doc = await self.user_crud.get_by_id(appt.doctor_id)
+                        if doc:
+                            doctor_name = f"{doc.first_name} {doc.last_name}"
+
+                    appointments.append({
+                        "id": str(appt.id),
+                        "patient_id": appt.patient_id,
+                        "patient_name": patient_name,
+                        "hospital_id": appt.hospital_id,
+                        "doctor_id": appt.doctor_id,
+                        "doctor_name": doctor_name,
+                        "reason": appt.reason,
+                        "symptoms": appt.symptoms,
+                        "temperature": appt.temperature,
+                        "appointment_date": str(appt.appointment_date),
+                        "slot": appt.slot,
+                        "status": appt.status,
+                    })
+            else:
+                todays_visits = await self.appointment_crud.get_todays_visits()
+                upcoming_visits = await self.appointment_crud.get_upcoming_visits()
+                appointments = []
 
             return {
                 "total_patients": total_patients,
                 "todays_visits": todays_visits,
                 "upcoming_visits": upcoming_visits,
                 "hospital_name": hospital_name,
+                "hospital_id": hospital_id,
+                "appointments": appointments,
             }
 
         except HTTPException:
