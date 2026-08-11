@@ -16,6 +16,9 @@ from core.database.database import (
 )
 from core.models.user_model import User
 from common.auth import encrypt_password
+from core.mcp import mcp
+
+mcp_app = mcp.http_app(path="/")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -68,7 +71,9 @@ async def lifespan(app: FastAPI):
                 existing_doctor.hospital_id = str(target_hospital.id)
                 await engine.save(existing_doctor)
 
-    yield
+    async with mcp_app.router.lifespan_context(mcp_app):
+        yield
+
     await close_mongo_connection()
 
 
@@ -96,6 +101,8 @@ app.include_router(hospital_router, tags=["Hospital"])
 app.include_router(superadmin_router, tags=["Superadmin"])
 app.include_router(chatbot_router, tags=["Chatbot"])
 app.include_router(prescription_router, tags=["Prescription"])
+
+app.mount("/mcp", mcp_app)
 
 @app.get("/")
 async def root():
