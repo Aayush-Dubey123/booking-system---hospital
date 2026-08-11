@@ -100,6 +100,24 @@ class PrescriptionController:
 
             prescription = await self.prescription_crud.create_prescription(prescription_dict)
 
+            # Index prescription text & Ollama embedding into RAG vector store
+            try:
+                from core.services.rag_service import RAGService
+                await RAGService().index_prescription(
+                    prescription_id=str(prescription.id),
+                    appointment_id=appointment_id,
+                    patient_id=appointment.patient_id,
+                    doctor_id=caller_doctor_id,
+                    patient_name=patient_name,
+                    doctor_name=doctor_name,
+                    diagnosis=diagnosis,
+                    medicines=medicines,
+                    notes=notes,
+                    created_at=prescription.created_at,
+                )
+            except Exception as rag_err:
+                logging.error(f"Failed to index prescription for RAG: {rag_err}")
+
             logging.info(f"Prescription created successfully for appointment {appointment_id}")
 
             return {

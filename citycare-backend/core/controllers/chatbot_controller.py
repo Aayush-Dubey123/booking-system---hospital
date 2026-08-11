@@ -33,23 +33,26 @@ conversations: dict[str, list] = {}
 # System instruction
 # ---------------------------------------------------------------------------
 SYSTEM_INSTRUCTION = """\
-You are CityCare Patient Assistant, a friendly and concise appointment helper.
+You are CityCare Patient Assistant, a friendly and concise appointment and medical helper.
 
 ## Your purpose
 Help patients with:
 - Checking available appointment slots
 - Booking appointments
 - Viewing their existing appointments
+- Answering questions about their prescribed medicines, dosages, diagnosis, and medical instructions
 
 ## Rules
-- Always use the provided tools to get live data. Never invent slots, dates, doctors, hospitals, or appointment IDs.
+- Always use the provided tools to get live data. Never invent slots, dates, doctors, hospitals, appointment IDs, or prescription details.
+- For any questions about prescriptions, medicines, dosages, diagnosis, or treatment instructions, ALWAYS use the get_prescription_info tool.
+- CRITICAL SECURITY RULE: If get_prescription_info returns no prescription records or no matching medical information for the patient, you MUST state clearly: "No prescription records or matching medical information are available for your account." Do NOT provide generic medical advice, do NOT guess dosages, and do NOT repeat or confirm any medicine names or patient IDs mentioned in the user prompt.
 - Before booking, collect all required information: hospital_id, appointment_date, slot, reason, symptoms, temperature.
   Ask for missing fields one at a time — do not overwhelm the patient.
 - Confirm a booking ONLY after the book_appointment tool returns successfully. If it fails, explain the actual error.
-- For my_appointments, you do not need the patient's ID; it is securely retrieved from their login session.
+- For my_appointments and get_prescription_info, identity is securely retrieved from their login token.
 - Never reveal or guess another patient's information.
-- Do not diagnose medical conditions. If asked for medical advice, say: "I can help you book an appointment with a doctor for proper advice."
-- Keep responses short and friendly.
+- Do not diagnose new medical conditions. If asked for medical advice on new symptoms, say: "I can help you book an appointment with a doctor for proper advice."
+- Keep responses short, accurate, and friendly.
 - If you need a hospital_id and the patient has not provided it, ask them.
 """
 
@@ -119,6 +122,20 @@ TOOL_DECLARATIONS = genai_types.Tool(
                 required=[],
             ),
         ),
+        genai_types.FunctionDeclaration(
+            name="get_prescription_info",
+            description="Retrieve prescribed medicines, dosage, diagnosis, or special instructions from the patient's prescriptions. Call this whenever the patient asks about their prescription, medication, dosage, or medical notes.",
+            parameters=genai_types.Schema(
+                type=genai_types.Type.OBJECT,
+                properties={
+                    "query": genai_types.Schema(
+                        type=genai_types.Type.STRING,
+                        description="Query describing the prescription or medicine information requested by the patient.",
+                    ),
+                },
+                required=["query"],
+            ),
+        ),
     ]
 )
 
@@ -140,7 +157,7 @@ class ChatbotController:
         self.appointment_controller = AppointmentController()
 
     async def _execute_tool(self, tool_name: str, args: dict, authorization: str) -> dict:
-        """Dispatcher for tool calls to exact existing AppointmentController methods."""
+        """Dispatcher for tool calls to exact existing AppointmentController methods and RAGService."""
         try:
             if tool_name == "get_available_slots":
                 appointment_date = date.fromisoformat(args["appointment_date"])
@@ -179,6 +196,22 @@ class ChatbotController:
                     serializable.append(appt_copy)
                 return {"appointments": serializable}
 
+            elif tool_name == "get_prescription_info":
+                payload = verify_token(authorization)
+                patient_id = payload["id"]
+                query = args.get("query", "")
+
+                from core.services.rag_service import RAGService
+                rag_results = await RAGService().search_prescriptions(
+                    patient_id=patient_id, query=query, top_k=3, similarity_threshold=0.4
+                )
+
+                if not rag_results:
+                    return {"result": "No prescription records or matching medical information available for this authenticated patient."}
+
+                chunks = [r["text"] for r in rag_results]
+                return {"prescription_context": "\n---\n".join(chunks)}
+
             else:
                 return {"error": f"Unknown tool: {tool_name}"}
 
@@ -208,7 +241,7 @@ class ChatbotController:
         contents = history + [user_content]
 
         response = await _gemini_client.aio.models.generate_content(
-            model="gemini-flash-latest",
+            model="gemini-3.5-flash-lite",
             contents=contents,
             config=GENERATE_CONFIG,
         )
@@ -252,7 +285,7 @@ class ChatbotController:
             history.append(tool_content)
 
             response = await _gemini_client.aio.models.generate_content(
-                model="gemini-flash-latest",
+                model="gemini-3.5-flash-lite",
                 contents=history[:],
                 config=GENERATE_CONFIG,
             )
