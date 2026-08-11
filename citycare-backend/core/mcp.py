@@ -10,12 +10,19 @@ from typing import Annotated, Any, Dict, List, Optional
 from pydantic import Field
 from fastmcp import FastMCP
 
+# pyrefly: ignore [missing-import]
 from core.controllers.user_controller import UserController
+# pyrefly: ignore [missing-import]
 from core.controllers.hospital_controller import HospitalController
+# pyrefly: ignore [missing-import]
 from core.controllers.appointment_controller import AppointmentController
+# pyrefly: ignore [missing-import]
 from core.controllers.doctor_controller import DoctorController
+# pyrefly: ignore [missing-import]
 from core.controllers.prescription_controller import PrescriptionController
+# pyrefly: ignore [missing-import]
 from core.controllers.chatbot_controller import ChatbotController
+# pyrefly: ignore [missing-import]
 from core.controllers.dashboard_controller import DashboardController
 
 mcp = FastMCP("HospitalCare")
