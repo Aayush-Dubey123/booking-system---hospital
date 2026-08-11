@@ -13,12 +13,19 @@ from dotenv import load_dotenv
 load_dotenv(dotenv_path=Path(__file__).resolve().parent / ".env")
 
 import httpx
+# pyrefly: ignore [missing-import]
 from core.apis.api import app
+# pyrefly: ignore [missing-import]
 from core.database.database import connect_to_mongo, close_mongo_connection, get_engine
+# pyrefly: ignore [missing-import]
 from core.models.user_model import User
+# pyrefly: ignore [missing-import]
 from core.models.hospital_model import Hospital
+# pyrefly: ignore [missing-import]
 from core.models.appointment_model import Appointment
+# pyrefly: ignore [missing-import]
 from core.models.prescription_model import Prescription
+# pyrefly: ignore [missing-import]
 from common.auth import encrypt_password, signJWT
 
 
@@ -59,6 +66,7 @@ async def run_tests():
     d2 = await get_or_create_user("doctor2_rx@test.com", "Doctor", "Beta", "doctor", hospital_id)
 
     # Clean up any existing appointments for test patients
+    # pyrefly: ignore [missing-import]
     from core.database.database import MongoDatabase
     db = MongoDatabase()
     await db["appointments"].delete_many({"patient_id": {"$in": [str(p1.id), str(p2.id)]}})
