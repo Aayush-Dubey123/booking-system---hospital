@@ -22,7 +22,7 @@ class Appointment(Model):
     temperature: float
     appointment_date: DateField
     slot: str
-    status: str = "booked"
+    status: str = "pending"
     created_at: datetime = datetime.utcnow()
 
     model_config = {

@@ -5,3 +5,7 @@ export const getDoctorDashboard = () =>
 
 export const getDoctorSchedule = (date) =>
   client.get('/v1/doctor/schedule', { params: { appointment_date: date } })
+
+export const acceptAppointment = (appointmentId) =>
+  client.put(`/v1/doctor/appointments/${appointmentId}/accept`)
+

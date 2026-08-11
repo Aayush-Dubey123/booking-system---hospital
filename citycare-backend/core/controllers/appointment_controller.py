@@ -5,8 +5,9 @@ from fastapi import HTTPException, status
 from core.cruds.appointment_crud import AppointmentCRUD
 from core.cruds.user_crud import UserCRUD
 from core.cruds.hospital_crud import HospitalCRUD
+from core.cruds.prescription_crud import PrescriptionCRUD
 from common.auth import decodeJWT
-from common.auth_helpers import verify_token
+from common.auth_helpers import verify_token, require_role
 from common.logger import logger
 
 logging = logger(__name__)
@@ -32,6 +33,7 @@ class AppointmentController:
         self.appointment_crud = AppointmentCRUD()
         self.user_crud = UserCRUD()
         self.hospital_crud = HospitalCRUD()
+        self.prescription_crud = PrescriptionCRUD()
 
     async def book_appointment(self, request: dict, authorization: str) -> dict:
         try:
@@ -73,7 +75,7 @@ class AppointmentController:
                     detail="Invalid appointment slot.",
                 )
 
-            # Check patient doesn't already have an appointment on this date
+            # Check patient doesn't already have an active appointment on this date
             patient_appointments = (
                 await self.appointment_crud.get_patient_appointments(
                     request["patient_id"]
@@ -81,59 +83,23 @@ class AppointmentController:
             )
 
             for appointment in patient_appointments:
-                if appointment.appointment_date == appointment_date:
+                if appointment.appointment_date == appointment_date and appointment.status != "cancelled":
                     raise HTTPException(
                         status_code=status.HTTP_400_BAD_REQUEST,
                         detail="Patient already has an appointment on this date.",
                     )
 
-            # Auto-assign doctor: find first doctor of this hospital free on this slot
-            assigned_doctor_id = None
-            if hospital_id:
-                doctors = await self.user_crud.get_doctors_by_hospital(hospital_id)
-                if not doctors:
-                    raise HTTPException(
-                        status_code=status.HTTP_400_BAD_REQUEST,
-                        detail="No doctors available at this hospital.",
-                    )
-
-                for doctor in doctors:
-                    booked_slots = (
-                        await self.appointment_crud.get_doctor_booked_slots_on_date(
-                            str(doctor.id), appointment_date
-                        )
-                    )
-                    if slot not in booked_slots:
-                        assigned_doctor_id = str(doctor.id)
-                        break
-
-                if not assigned_doctor_id:
-                    raise HTTPException(
-                        status_code=status.HTTP_400_BAD_REQUEST,
-                        detail="Selected slot is fully booked at this hospital.",
-                    )
-            else:
-                # Legacy path: no hospital — check global slot conflict
-                appointments = (
-                    await self.appointment_crud.get_appointments_by_date(
-                        appointment_date
-                    )
-                )
-                for appointment in appointments:
-                    if appointment.slot == slot:
-                        raise HTTPException(
-                            status_code=status.HTTP_400_BAD_REQUEST,
-                            detail="Selected slot is already booked.",
-                        )
-
-            request["doctor_id"] = assigned_doctor_id
+            request["doctor_id"] = None
+            request["status"] = "pending"
             appointment = await self.appointment_crud.create_appointment(request)
 
-            logging.info("Appointment booked successfully")
+            logging.info("Appointment booked successfully with status 'pending'")
 
             return {
                 "id": str(appointment.id),
                 "patient_id": appointment.patient_id,
+                "hospital_id": appointment.hospital_id,
+                "doctor_id": appointment.doctor_id,
                 "appointment_date": appointment.appointment_date,
                 "slot": appointment.slot,
                 "status": appointment.status,
@@ -147,6 +113,52 @@ class AppointmentController:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="An error occurred while booking the appointment.",
+            )
+
+    async def accept_appointment(self, appointment_id: str, authorization: str) -> dict:
+        try:
+            logging.info(f"Calling AppointmentController.accept_appointment for {appointment_id}")
+
+            payload = verify_token(authorization)
+            require_role(payload, "doctor")
+            doctor_id = payload["id"]
+
+            updated_appt = await self.appointment_crud.accept_appointment_atomic(
+                appointment_id, doctor_id
+            )
+
+            if not updated_appt:
+                existing = await self.appointment_crud.get_by_id(appointment_id)
+                if not existing:
+                    raise HTTPException(
+                        status_code=status.HTTP_404_NOT_FOUND,
+                        detail="Appointment not found.",
+                    )
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Appointment is already accepted or not pending.",
+                )
+
+            logging.info(f"Appointment {appointment_id} accepted by doctor {doctor_id}")
+
+            return {
+                "id": str(updated_appt.id),
+                "patient_id": updated_appt.patient_id,
+                "doctor_id": updated_appt.doctor_id,
+                "hospital_id": updated_appt.hospital_id,
+                "appointment_date": updated_appt.appointment_date,
+                "slot": updated_appt.slot,
+                "status": updated_appt.status,
+            }
+
+        except HTTPException:
+            raise
+
+        except Exception as error:
+            logging.error(f"Error in AppointmentController.accept_appointment: {error}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="An error occurred while accepting the appointment.",
             )
 
     async def get_my_appointments(self, authorization: str) -> list:
@@ -166,7 +178,6 @@ class AppointmentController:
 
             result = []
             for appointment in appointments:
-                # Resolve hospital name
                 hospital_name = None
                 if appointment.hospital_id:
                     hospital = await self.hospital_crud.get_by_id(
@@ -175,10 +186,29 @@ class AppointmentController:
                     if hospital:
                         hospital_name = hospital.name
 
+                doctor_name = None
+                if appointment.doctor_id:
+                    doc = await self.user_crud.get_by_id(appointment.doctor_id)
+                    if doc:
+                        doctor_name = f"Dr. {doc.first_name} {doc.last_name}"
+
+                # Check if prescription exists for this appointment
+                prescription_data = None
+                p = await self.prescription_crud.get_by_appointment_id(str(appointment.id))
+                if p:
+                    prescription_data = {
+                        "id": str(p.id),
+                        "pdf_url": p.pdf_url,
+                        "diagnosis": p.diagnosis,
+                        "created_at": p.created_at,
+                    }
+
                 result.append(
                     {
                         "id": str(appointment.id),
                         "patient_id": appointment.patient_id,
+                        "doctor_id": appointment.doctor_id,
+                        "doctor_name": doctor_name,
                         "reason": appointment.reason,
                         "symptoms": appointment.symptoms,
                         "temperature": appointment.temperature,
@@ -187,6 +217,7 @@ class AppointmentController:
                         "status": appointment.status,
                         "created_at": appointment.created_at,
                         "hospital_name": hospital_name,
+                        "prescription": prescription_data,
                     }
                 )
 

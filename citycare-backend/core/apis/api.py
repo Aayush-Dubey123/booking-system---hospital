@@ -9,6 +9,7 @@ from core.apis.routes.user_router import user_router
 from core.apis.routes.hospital_router import hospital_router
 from core.apis.routes.superadmin_router import superadmin_router
 from core.apis.routes.chatbot_router import chatbot_router
+from core.apis.routes.prescription_router import prescription_router
 from core.database.database import (
     connect_to_mongo,
     close_mongo_connection,
@@ -95,6 +96,7 @@ app.include_router(doctor_router, tags=["Doctor"])
 app.include_router(hospital_router, tags=["Hospital"])
 app.include_router(superadmin_router, tags=["Superadmin"])
 app.include_router(chatbot_router, tags=["Chatbot"])
+app.include_router(prescription_router, tags=["Prescription"])
 
 @app.get("/")
 async def root():

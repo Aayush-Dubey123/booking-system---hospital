@@ -70,3 +70,32 @@ async def get_doctor_schedule(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Something went wrong",
         )
+
+
+@doctor_router.put(
+    "/v1/doctor/appointments/{appointment_id}/accept",
+    status_code=status.HTTP_200_OK,
+)
+async def accept_appointment(
+    appointment_id: str,
+    authorization: str = Header(...),
+):
+    try:
+        logging.info(f"Calling /v1/doctor/appointments/{appointment_id}/accept endpoint")
+
+        from core.controllers.appointment_controller import AppointmentController
+        return await AppointmentController().accept_appointment(
+            appointment_id, authorization
+        )
+
+    except HTTPException:
+        raise
+
+    except Exception as error:
+        logging.error(
+            f"Error in /v1/doctor/appointments/{appointment_id}/accept: {error}"
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Something went wrong",
+        )

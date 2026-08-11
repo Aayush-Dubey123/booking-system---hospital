@@ -1,8 +1,7 @@
 from datetime import date, datetime, timedelta
 
-from odmantic import AIOEngine
-
-from core.database.database import get_engine
+from odmantic import AIOEngine, ObjectId
+from core.database.database import get_engine, MongoDatabase
 from core.models.appointment_model import Appointment
 from common.logger import logger
 
@@ -29,6 +28,39 @@ class AppointmentCRUD:
             )
         except Exception as error:
             logging.error(f"Error creating appointment: {error}")
+            raise
+
+    async def get_by_id(self, appointment_id: str) -> Appointment | None:
+        try:
+            logging.info(f"Fetching appointment by ID: {appointment_id}")
+            try:
+                oid = ObjectId(appointment_id)
+            except Exception:
+                return None
+            return await self.engine.find_one(Appointment, Appointment.id == oid)
+        except Exception as error:
+            logging.error(f"Error fetching appointment by ID: {error}")
+            raise
+
+    async def accept_appointment_atomic(self, appointment_id: str, doctor_id: str) -> Appointment | None:
+        try:
+            logging.info(f"Atomic update for appointment {appointment_id} acceptance by doctor {doctor_id}")
+            db = MongoDatabase()
+            try:
+                oid = ObjectId(appointment_id)
+            except Exception:
+                return None
+
+            result = await db["appointments"].find_one_and_update(
+                {"_id": oid, "status": "pending"},
+                {"$set": {"status": "accepted", "doctor_id": doctor_id}},
+                return_document=True,
+            )
+            if not result:
+                return None
+            return await self.engine.find_one(Appointment, Appointment.id == oid)
+        except Exception as error:
+            logging.error(f"Error in accept_appointment_atomic: {error}")
             raise
 
     async def get_appointments_by_date(

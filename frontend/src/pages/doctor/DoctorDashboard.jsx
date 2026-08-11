@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
-import { getDoctorDashboard } from '../../api/doctorApi'
+import { getDoctorDashboard, acceptAppointment } from '../../api/doctorApi'
+import { createPrescription } from '../../api/prescriptionApi'
 import Layout from '../../components/Layout'
 import MetricTile from '../../components/MetricTile'
 import PulseDivider from '../../components/PulseDivider'
 import ErrorBanner from '../../components/ErrorBanner'
 import { useAuth } from '../../context/AuthContext'
-import { Users, CalendarDays, CalendarClock, Calendar } from 'lucide-react'
+import { Users, CalendarDays, CalendarClock, Calendar, CheckCircle, FileText, X } from 'lucide-react'
 
 /* Shared flat doctor illustration */
 function DoctorArt() {
@@ -31,10 +32,20 @@ function DoctorArt() {
 }
 
 export default function DoctorDashboard() {
-  const { token } = useAuth()
+  const { user } = useAuth()
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+
+  // Modal State
+  const [activeAppt, setActiveAppt] = useState(null)
+  const [diagnosis, setDiagnosis] = useState('')
+  const [medicines, setMedicines] = useState('')
+  const [notes, setNotes] = useState('')
+  const [submittingRx, setSubmittingRx] = useState(false)
+  const [rxError, setRxError] = useState('')
+  const [rxSuccess, setRxSuccess] = useState('')
+  const [acceptingId, setAcceptingId] = useState(null)
 
   const fetchDashboard = async () => {
     setLoading(true)
@@ -53,8 +64,57 @@ export default function DoctorDashboard() {
     fetchDashboard()
   }, [])
 
-  const doctorName = 'Dr. Doctor One'
-  const doctorInitials = 'D1'
+  const handleAccept = async (appointmentId) => {
+    setAcceptingId(appointmentId)
+    setError('')
+    try {
+      await acceptAppointment(appointmentId)
+      await fetchDashboard()
+    } catch (err) {
+      setError(err.response?.data?.detail ?? 'Failed to accept appointment.')
+    } finally {
+      setAcceptingId(null)
+    }
+  }
+
+  const handleOpenRxModal = (appt) => {
+    setActiveAppt(appt)
+    setDiagnosis('')
+    setMedicines('')
+    setNotes('')
+    setRxError('')
+    setRxSuccess('')
+  }
+
+  const handleCreatePrescription = async (e) => {
+    e.preventDefault()
+    if (!activeAppt || !diagnosis || !medicines) return
+
+    setSubmittingRx(true)
+    setRxError('')
+    setRxSuccess('')
+
+    try {
+      const res = await createPrescription({
+        appointment_id: activeAppt.id,
+        diagnosis,
+        medicines,
+        notes,
+      })
+      setRxSuccess('Prescription created successfully!')
+      setTimeout(() => {
+        setActiveAppt(null)
+        fetchDashboard()
+      }, 1500)
+    } catch (err) {
+      setRxError(err.response?.data?.detail ?? 'Failed to create prescription.')
+    } finally {
+      setSubmittingRx(false)
+    }
+  }
+
+  const doctorName = user ? `Dr. ${user.first_name} ${user.last_name}` : 'Dr. Doctor One'
+  const doctorInitials = user ? `${user.first_name[0]}${user.last_name[0]}` : 'D1'
   const hospitalName = data?.hospital_name ?? 'Your Hospital'
   const todaysVisits = data?.todays_visits ?? null
   const appointments = data?.appointments ?? []
@@ -150,19 +210,66 @@ export default function DoctorDashboard() {
           ) : (
             <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 12 }}>
               {appointments.map(a => (
-                <li key={a.id} style={{ padding: 12, border: '1px solid var(--line)', borderRadius: 8 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                <li key={a.id} style={{ padding: 16, border: '1px solid var(--line)', borderRadius: 10, background: '#fff' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
                     <div>
-                      <div style={{ fontWeight: 500, color: 'var(--ink)' }}>
+                      <div style={{ fontWeight: 600, color: 'var(--ink)', fontSize: 15 }}>
                         {a.appointment_date} at {a.slot}
                       </div>
-                      <div style={{ fontSize: 13, color: 'var(--ink-soft)', marginTop: 4 }}>
-                        Patient: {a.patient_name}<br />
-                        Doctor: {a.doctor_name || 'Pending Assignment'}<br />
-                        Reason: {a.reason}
+                      <div style={{ fontSize: 13, color: 'var(--ink-soft)', marginTop: 4, lineHeight: 1.5 }}>
+                        <strong>Patient:</strong> {a.patient_name}<br />
+                        <strong>Assigned Doctor:</strong> {a.doctor_name || 'Pending Assignment'}<br />
+                        <strong>Reason:</strong> {a.reason} | <strong>Symptoms:</strong> {a.symptoms} ({a.temperature}°C)
                       </div>
                     </div>
-                    <span className={`status-badge ${a.status}`}>{a.status}</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <span className={`status-badge ${a.status}`}>{a.status}</span>
+                      
+                      {a.status === 'pending' && (
+                        <button
+                          onClick={() => handleAccept(a.id)}
+                          disabled={acceptingId === a.id}
+                          style={{
+                            padding: '6px 14px',
+                            borderRadius: 6,
+                            background: 'var(--teal-deep)',
+                            color: '#fff',
+                            border: 'none',
+                            cursor: 'pointer',
+                            fontSize: 13,
+                            fontWeight: 500,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 6
+                          }}
+                        >
+                          <CheckCircle size={14} />
+                          {acceptingId === a.id ? 'Accepting…' : 'Accept'}
+                        </button>
+                      )}
+
+                      {a.status === 'accepted' && (
+                        <button
+                          onClick={() => handleOpenRxModal(a)}
+                          style={{
+                            padding: '6px 14px',
+                            borderRadius: 6,
+                            background: 'var(--pulse-deep)',
+                            color: '#fff',
+                            border: 'none',
+                            cursor: 'pointer',
+                            fontSize: 13,
+                            fontWeight: 500,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 6
+                          }}
+                        >
+                          <FileText size={14} />
+                          Create Prescription
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </li>
               ))}
@@ -170,6 +277,86 @@ export default function DoctorDashboard() {
           )}
         </div>
       </div>
+
+      {/* Prescription Modal */}
+      {activeAppt && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          zIndex: 1000, padding: 20
+        }}>
+          <div style={{
+            background: '#fff', borderRadius: 12, width: '100%', maxWidth: 540,
+            padding: 24, boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <h3 style={{ margin: 0, fontSize: 18, color: 'var(--ink)' }}>
+                Prescribe for {activeAppt.patient_name}
+              </h3>
+              <button onClick={() => setActiveAppt(null)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
+                <X size={20} color="var(--ink-soft)" />
+              </button>
+            </div>
+
+            {rxError && <div style={{ background: '#FEE2E2', color: '#991B1B', padding: 10, borderRadius: 6, marginBottom: 14, fontSize: 13 }}>{rxError}</div>}
+            {rxSuccess && <div style={{ background: '#D1FAE5', color: '#065F46', padding: 10, borderRadius: 6, marginBottom: 14, fontSize: 13 }}>{rxSuccess}</div>}
+
+            <form onSubmit={handleCreatePrescription}>
+              <div style={{ marginBottom: 14 }}>
+                <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: 'var(--ink)', marginBottom: 4 }}>Diagnosis *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Acute Bronchitis, Fever"
+                  value={diagnosis}
+                  onChange={(e) => setDiagnosis(e.target.value)}
+                  style={{ width: '100%', padding: '8px 12px', borderRadius: 6, border: '1px solid var(--line)', fontSize: 14 }}
+                />
+              </div>
+
+              <div style={{ marginBottom: 14 }}>
+                <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: 'var(--ink)', marginBottom: 4 }}>Medicines & Dosage *</label>
+                <textarea
+                  required
+                  rows={4}
+                  placeholder="e.g. Amoxicillin 500mg - 1 capsule thrice daily for 5 days&#10;Paracetamol 650mg - as needed for fever"
+                  value={medicines}
+                  onChange={(e) => setMedicines(e.target.value)}
+                  style={{ width: '100%', padding: '8px 12px', borderRadius: 6, border: '1px solid var(--line)', fontSize: 14 }}
+                />
+              </div>
+
+              <div style={{ marginBottom: 20 }}>
+                <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: 'var(--ink)', marginBottom: 4 }}>Instructions / Special Notes</label>
+                <textarea
+                  rows={2}
+                  placeholder="e.g. Drink plenty of fluids. Rest for 3 days."
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  style={{ width: '100%', padding: '8px 12px', borderRadius: 6, border: '1px solid var(--line)', fontSize: 14 }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
+                <button
+                  type="button"
+                  onClick={() => setActiveAppt(null)}
+                  style={{ padding: '8px 16px', borderRadius: 6, border: '1px solid var(--line)', background: '#fff', cursor: 'pointer', fontSize: 13 }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={submittingRx}
+                  style={{ padding: '8px 18px', borderRadius: 6, border: 'none', background: 'var(--pulse-deep)', color: '#fff', fontWeight: 500, cursor: 'pointer', fontSize: 13 }}
+                >
+                  {submittingRx ? 'Generating PDF & Uploading…' : 'Generate & Save Prescription'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </Layout>
   )
 }

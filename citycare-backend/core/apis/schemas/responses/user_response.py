@@ -22,6 +22,8 @@ class UserLoginResponse(BaseModel):
 class AppointmentResponse(BaseModel):
     id: str
     patient_id: str
+    doctor_id: Optional[str] = None
+    hospital_id: Optional[str] = None
     appointment_date: date
     slot: str
     status: str
@@ -29,6 +31,9 @@ class AppointmentResponse(BaseModel):
 class MyAppointmentResponse(BaseModel):
     id: str
     patient_id: str
+    doctor_id: Optional[str] = None
+    doctor_name: Optional[str] = None
+    hospital_name: Optional[str] = None
     reason: str
     symptoms: str
     temperature: float
@@ -36,6 +41,7 @@ class MyAppointmentResponse(BaseModel):
     slot: str
     status: str
     created_at: datetime
+    prescription: Optional[dict] = None
 
 class DashboardResponse(BaseModel):
     total_appointments: int
