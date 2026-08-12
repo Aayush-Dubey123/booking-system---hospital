@@ -24,7 +24,7 @@ from datetime import date, timedelta
 from pathlib import Path
 
 # Ensure project root is on path
-ROOT = Path(__file__).resolve().parent
+ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
 import httpx

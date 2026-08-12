@@ -13,7 +13,7 @@ import asyncio
 from pathlib import Path
 
 # Add citycare-backend to path
-backend_dir = Path(__file__).resolve().parent / "citycare-backend"
+backend_dir = Path(__file__).resolve().parent.parent / "citycare-backend"
 if str(backend_dir) not in sys.path:
     sys.path.insert(0, str(backend_dir))
 
