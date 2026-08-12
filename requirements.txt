@@ -37,3 +37,5 @@ httpx==0.28.1
 reportlab
 
 cloudinary
+
+fastmcp==3.4.5

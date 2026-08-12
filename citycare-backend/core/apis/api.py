@@ -2,20 +2,34 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
+# pyrefly: ignore [missing-import]
 from core.apis.routes.doctor_router import doctor_router
+# pyrefly: ignore [missing-import]
 from core.apis.routes.auth_router import auth_router
+# pyrefly: ignore [missing-import]
 from core.apis.routes.user_router import user_router
+# pyrefly: ignore [missing-import]
 from core.apis.routes.hospital_router import hospital_router
+# pyrefly: ignore [missing-import]
 from core.apis.routes.superadmin_router import superadmin_router
+# pyrefly: ignore [missing-import]
 from core.apis.routes.chatbot_router import chatbot_router
+# pyrefly: ignore [missing-import]
 from core.apis.routes.prescription_router import prescription_router
+# pyrefly: ignore [missing-import]
 from core.database.database import (
     connect_to_mongo,
     close_mongo_connection,
     get_engine,
 )
+# pyrefly: ignore [missing-import]
 from core.models.user_model import User
+# pyrefly: ignore [missing-import]
 from common.auth import encrypt_password
+# pyrefly: ignore [missing-import]
+from core.mcp import mcp
+
+mcp_app = mcp.http_app(path="/")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -37,6 +51,7 @@ async def lifespan(app: FastAPI):
         await engine.save(superadmin)
 
     # ── Auto-seed doctor1@example.com → citycare-ngp hospital ─────────────
+    # pyrefly: ignore [missing-import]
     from core.models.hospital_model import Hospital
     existing_doctor = await engine.find_one(User, User.email == "doctor1@example.com")
     if not existing_doctor:
@@ -59,6 +74,7 @@ async def lifespan(app: FastAPI):
     else:
         # If doctor exists but hospital_id is missing, assign to ngp hospital
         if not existing_doctor.hospital_id:
+            # pyrefly: ignore [missing-import]
             from core.models.hospital_model import Hospital
             all_hospitals = await engine.find(Hospital)
             target_hospital = next(
@@ -68,7 +84,9 @@ async def lifespan(app: FastAPI):
                 existing_doctor.hospital_id = str(target_hospital.id)
                 await engine.save(existing_doctor)
 
-    yield
+    async with mcp_app.router.lifespan_context(mcp_app):
+        yield
+
     await close_mongo_connection()
 
 
@@ -96,6 +114,8 @@ app.include_router(hospital_router, tags=["Hospital"])
 app.include_router(superadmin_router, tags=["Superadmin"])
 app.include_router(chatbot_router, tags=["Chatbot"])
 app.include_router(prescription_router, tags=["Prescription"])
+
+app.mount("/mcp", mcp_app)
 
 @app.get("/")
 async def root():

@@ -5,22 +5,31 @@ from pathlib import Path
 from datetime import date, timedelta
 
 # Ensure citycare-backend is in python path
-backend_path = Path(__file__).resolve().parent / "citycare-backend"
+backend_path = Path(__file__).resolve().parent.parent / "citycare-backend"
 if str(backend_path) not in sys.path:
     sys.path.insert(0, str(backend_path))
 
 from dotenv import load_dotenv
-load_dotenv(dotenv_path=Path(__file__).resolve().parent / ".env")
+load_dotenv(dotenv_path=Path(__file__).resolve().parent.parent / ".env")
 
 import httpx
+# pyrefly: ignore [missing-import]
 from core.apis.api import app
+# pyrefly: ignore [missing-import]
 from core.database.database import connect_to_mongo, close_mongo_connection, get_engine, MongoDatabase
+# pyrefly: ignore [missing-import]
 from core.models.user_model import User
+# pyrefly: ignore [missing-import]
 from core.models.hospital_model import Hospital
+# pyrefly: ignore [missing-import]
 from core.models.appointment_model import Appointment
+# pyrefly: ignore [missing-import]
 from core.models.prescription_model import Prescription
+# pyrefly: ignore [missing-import]
 from common.auth import encrypt_password, signJWT
+# pyrefly: ignore [missing-import]
 from core.services.rag_service import RAGService
+# pyrefly: ignore [missing-import]
 from common.embedding_service import get_embedding
 
 

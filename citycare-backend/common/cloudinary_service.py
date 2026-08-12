@@ -7,6 +7,7 @@ import cloudinary
 import cloudinary.uploader
 from cloudinary.utils import cloudinary_url
 
+# pyrefly: ignore [missing-import]
 from common.logger import logger
 
 

@@ -1,0 +1,3 @@
+"""
+HospitalCare test package.
+"""

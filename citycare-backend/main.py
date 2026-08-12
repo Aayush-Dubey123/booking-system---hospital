@@ -7,6 +7,7 @@ env_path = Path(__file__).resolve().parent.parent / ".env"
 load_dotenv(dotenv_path=env_path)
 
 import uvicorn
+# pyrefly: ignore [missing-import]
 from core.apis.api import app
 
 if __name__ == "__main__":
@@ -16,4 +17,4 @@ if __name__ == "__main__":
         port=8000,
         reload=True,
         server_header=False,
-    )
+    )
