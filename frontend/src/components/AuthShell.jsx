@@ -4,21 +4,21 @@ import { useNavigate } from 'react-router-dom'
 function DoctorArt() {
   return (
     <svg viewBox="0 0 220 230" style={{ width: '100%', height: 'auto' }}>
-      <ellipse cx="110" cy="205" rx="90" ry="14" fill="#0A5646" opacity=".35" />
-      <rect x="30" y="70" width="60" height="60" rx="10" fill="#DCEEE8" />
+      <ellipse cx="110" cy="205" rx="90" ry="14" fill="#cca75a" opacity=".2" />
+      <rect x="30" y="70" width="60" height="60" rx="10" fill="#0b1329" />
       <path d="M40 70 h40 v-6 a20 20 0 0 0 -40 0 z" fill="#F1D9C6" />
       <circle cx="60" cy="55" r="20" fill="#F1D9C6" />
       <path d="M42 50 a18 14 0 0 1 36 0" fill="#2A2018" />
-      <rect x="80" y="88" width="112" height="90" rx="14" fill="#0E6E5C" />
+      <rect x="80" y="88" width="112" height="90" rx="14" fill="#cca75a" />
       <circle cx="136" cy="70" r="22" fill="#F1D9C6" />
       <path d="M116 66 a20 15 0 0 1 40 0" fill="#2A2018" />
-      <rect x="105" y="90" width="62" height="88" rx="12" fill="#FFFFFF" />
-      <rect x="118" y="108" width="36" height="6" rx="3" fill="#D9E5E0" />
-      <rect x="118" y="120" width="36" height="6" rx="3" fill="#D9E5E0" />
-      <rect x="118" y="132" width="22" height="6" rx="3" fill="#E1583F" />
-      <circle cx="70" cy="115" r="7" fill="none" stroke="#0A5646" strokeWidth="3" />
-      <path d="M70 122 v14 a10 10 0 0 0 10 10 h6" fill="none" stroke="#0A5646" strokeWidth="3" strokeLinecap="round" />
-      <circle cx="90" cy="147" r="5" fill="#E1583F" />
+      <rect x="105" y="90" width="62" height="88" rx="12" fill="#080f1e" stroke="rgba(204, 167, 90, 0.25)" strokeWidth="1" />
+      <rect x="118" y="108" width="36" height="6" rx="3" fill="#0b1329" />
+      <rect x="118" y="120" width="36" height="6" rx="3" fill="#0b1329" />
+      <rect x="118" y="132" width="22" height="6" rx="3" fill="#cca75a" />
+      <circle cx="70" cy="115" r="7" fill="none" stroke="#cca75a" strokeWidth="3" />
+      <path d="M70 122 v14 a10 10 0 0 0 10 10 h6" fill="none" stroke="#cca75a" strokeWidth="3" strokeLinecap="round" />
+      <circle cx="90" cy="147" r="5" fill="#cca75a" />
     </svg>
   )
 }

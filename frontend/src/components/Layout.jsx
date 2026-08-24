@@ -21,7 +21,7 @@ export default function Layout({ children, title = 'Overview' }) {
   const initials = getInitials(userName)
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg)' }}>
+    <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: 'var(--bg)' }}>
       {/* Mobile overlay */}
       {mobileOpen && (
         <div
@@ -33,7 +33,7 @@ export default function Layout({ children, title = 'Overview' }) {
 
       {/* Sidebar */}
       <div
-        style={{ zIndex: 50 }}
+        style={{ zIndex: 50, height: '100vh', display: 'flex', flexDirection: 'column' }}
         className={`fixed inset-y-0 left-0 transform transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0 ${
           mobileOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
@@ -42,7 +42,7 @@ export default function Layout({ children, title = 'Overview' }) {
       </div>
 
       {/* Main content */}
-      <main style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
+      <main style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', height: '100vh', overflowY: 'auto' }}>
 
         {/* Page content */}
         <div style={{ padding: '32px 40px 60px', flex: 1, maxWidth: '1220px', width: '100%' }}

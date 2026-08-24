@@ -16,21 +16,21 @@ const USER_INITIALS = 'JD'
 function DoctorArt() {
   return (
     <svg viewBox="0 0 220 230" style={{ width: '100%', height: 'auto', maxWidth: 190 }}>
-      <ellipse cx="110" cy="205" rx="90" ry="14" fill="#0A5646" opacity=".35" />
-      <rect x="30" y="70" width="60" height="60" rx="10" fill="#DCEEE8" />
+      <ellipse cx="110" cy="205" rx="90" ry="14" fill="#cca75a" opacity=".2" />
+      <rect x="30" y="70" width="60" height="60" rx="10" fill="#0b1329" />
       <path d="M40 70 h40 v-6 a20 20 0 0 0 -40 0 z" fill="#F1D9C6" />
       <circle cx="60" cy="55" r="20" fill="#F1D9C6" />
       <path d="M42 50 a18 14 0 0 1 36 0" fill="#2A2018" />
-      <rect x="80" y="88" width="112" height="90" rx="14" fill="#0E6E5C" />
+      <rect x="80" y="88" width="112" height="90" rx="14" fill="#cca75a" />
       <circle cx="136" cy="70" r="22" fill="#F1D9C6" />
       <path d="M116 66 a20 15 0 0 1 40 0" fill="#2A2018" />
-      <rect x="105" y="90" width="62" height="88" rx="12" fill="#FFFFFF" />
-      <rect x="118" y="108" width="36" height="6" rx="3" fill="#D9E5E0" />
-      <rect x="118" y="120" width="36" height="6" rx="3" fill="#D9E5E0" />
-      <rect x="118" y="132" width="22" height="6" rx="3" fill="#E1583F" />
-      <circle cx="70" cy="115" r="7" fill="none" stroke="#0A5646" strokeWidth="3" />
-      <path d="M70 122 v14 a10 10 0 0 0 10 10 h6" fill="none" stroke="#0A5646" strokeWidth="3" strokeLinecap="round" />
-      <circle cx="90" cy="147" r="5" fill="#E1583F" />
+      <rect x="105" y="90" width="62" height="88" rx="12" fill="#080f1e" stroke="rgba(204, 167, 90, 0.25)" strokeWidth="1" />
+      <rect x="118" y="108" width="36" height="6" rx="3" fill="#0b1329" />
+      <rect x="118" y="120" width="36" height="6" rx="3" fill="#0b1329" />
+      <rect x="118" y="132" width="22" height="6" rx="3" fill="#cca75a" />
+      <circle cx="70" cy="115" r="7" fill="none" stroke="#cca75a" strokeWidth="3" />
+      <path d="M70 122 v14 a10 10 0 0 0 10 10 h6" fill="none" stroke="#cca75a" strokeWidth="3" strokeLinecap="round" />
+      <circle cx="90" cy="147" r="5" fill="#cca75a" />
     </svg>
   )
 }
@@ -167,16 +167,16 @@ export default function BookAppointment() {
       
       <PulseDivider animKey="book" />
 
-      <div className="section-gap max-lg:grid-cols-1 max-lg:!grid" style={{ display: 'grid', gridTemplateColumns: '1.3fr 0.7fr', gap: '16px', alignItems: 'start' }}>
+      <div className="section-gap max-lg:grid-cols-1 max-lg:!grid" style={{ display: 'grid', gridTemplateColumns: '1.15fr 0.85fr', gap: '16px', alignItems: 'stretch' }}>
         {/* Left column — Form */}
-        <form onSubmit={handleSubmit(onSubmit)} className="panel">
+        <form onSubmit={handleSubmit(onSubmit)} className="panel" style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
           <div className="panel-head">
             <div className="t">
               <Calendar size={18} />
               <h2>Appointment details</h2>
             </div>
           </div>
-          <div className="panel-body">
+          <div className="panel-body" style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
             
             <div className="cc-field">
               <label htmlFor="hospital_id">Hospital</label>
@@ -278,7 +278,7 @@ export default function BookAppointment() {
         </form>
 
         {/* Right column — Dark panel (Free slots) */}
-        <div className="panel" style={{ background: 'var(--ink)', color: '#fff', border: 'none', padding: '38px 30px', textAlign: 'center', position: 'sticky', top: 90 }}>
+        <div className="panel" style={{ background: 'var(--surface)', color: 'var(--ink)', border: '1px solid var(--line)', padding: '38px 30px', textAlign: 'center', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
           <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 24 }}>
             <DoctorArt />
           </div>
@@ -290,20 +290,20 @@ export default function BookAppointment() {
               <div className="skeleton-num" style={{ margin: '0 auto 8px' }} />
             ) : (
               <>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 48, fontWeight: 600, lineHeight: 1, margin: '0 0 6px', color: '#fff' }}>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 48, fontWeight: 600, lineHeight: 1, margin: '0 0 6px', color: 'var(--teal)' }}>
                   {availableCount}
                 </div>
-                <div style={{ fontSize: 13, color: '#B8D3CC' }}>
+                <div style={{ fontSize: 13, color: 'var(--ink-soft)' }}>
                   Out of {totalSlots} slots
                 </div>
               </>
             )
           ) : (
             <>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 48, fontWeight: 600, lineHeight: 1, margin: '0 0 6px', color: '#fff', opacity: 0.5 }}>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 48, fontWeight: 600, lineHeight: 1, margin: '0 0 6px', color: 'var(--ink)', opacity: 0.25 }}>
                 —
               </div>
-              <div style={{ fontSize: 13, color: '#B8D3CC' }}>
+              <div style={{ fontSize: 13, color: 'var(--ink-soft)' }}>
                 Select a date to see availability
               </div>
             </>

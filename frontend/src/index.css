@@ -15,22 +15,22 @@
    ============================================================ */
 
 :root {
-  --bg: #F1F6F4;
-  --surface: #FFFFFF;
-  --surface-tint: #E9F1EC;
-  --ink: #16302B;
-  --ink-soft: #56716B;
-  --ink-faint: #8CA39D;
-  --line: #D9E5E0;
-  --line-strong: #C3D4CD;
-  --teal: #0E6E5C;
-  --teal-deep: #0A5646;
-  --teal-tint: #DCEEE8;
-  --pulse: #E1583F;
-  --pulse-tint: #FBE4DD;
-  --pulse-deep: #B8402B;
-  --amber: #C4922E;
-  --amber-tint: #F6EBD6;
+  --bg: #050811;
+  --surface: #080f1e;
+  --surface-tint: #0b1329;
+  --ink: #ffffff;
+  --ink-soft: #94a3b8;
+  --ink-faint: #475569;
+  --line: rgba(204, 167, 90, 0.12);
+  --line-strong: rgba(204, 167, 90, 0.25);
+  --teal: #cca75a;
+  --teal-deep: #ddb96a;
+  --teal-tint: rgba(204, 167, 90, 0.08);
+  --pulse: #cca75a;
+  --pulse-tint: rgba(204, 167, 90, 0.08);
+  --pulse-deep: #ddb96a;
+  --amber: #cca75a;
+  --amber-tint: rgba(204, 167, 90, 0.08);
   --font-display: 'Fraunces', serif;
   --font-body: 'Space Grotesk', sans-serif;
   --font-mono: 'IBM Plex Mono', monospace;
@@ -42,12 +42,12 @@
   --font-sans: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
   --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
   --animate-slide-in: slide-in 0.3s ease-out;
-  --color-cc-bg: #F1F6F4;
-  --color-cc-surface: #FFFFFF;
-  --color-cc-ink: #16302B;
-  --color-cc-teal: #0E6E5C;
-  --color-cc-pulse: #E1583F;
-  --color-cc-amber: #C4922E;
+  --color-cc-bg: #050811;
+  --color-cc-surface: #080f1e;
+  --color-cc-ink: #ffffff;
+  --color-cc-teal: #cca75a;
+  --color-cc-pulse: #cca75a;
+  --color-cc-amber: #cca75a;
 }
 
 * { box-sizing: border-box; }
@@ -75,7 +75,7 @@
 @layer base {
   * { box-sizing: border-box; }
 
-  html, body { margin: 0; padding: 0; }
+  html, body { margin: 0; padding: 0; overflow-x: hidden; scroll-behavior: smooth; }
 
   body {
     background: var(--bg);
@@ -149,8 +149,10 @@
   border-radius: 999px;
   width: fit-content;
 }
-.role-badge.patient { background: var(--teal-tint); color: var(--teal-deep); }
-.role-badge.doctor  { background: var(--pulse-tint); color: var(--pulse-deep); }
+.role-badge.patient { background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.2); color: #10b981; }
+.role-badge.doctor  { background: rgba(204,167,90,0.08); border: 1px solid rgba(204,167,90,0.25); color: #cca75a; }
+.role-badge.owner   { background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.2); color: #f59e0b; }
+.role-badge.superadmin { background: rgba(99,102,241,0.08); border: 1px solid rgba(99,102,241,0.2); color: #6366f1; }
 .role-badge .dot {
   width: 6px;
   height: 6px;
@@ -167,7 +169,7 @@
   padding: 26px 18px;
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  height: 100%;
 }
 .cc-sidebar .brand { display: flex; align-items: center; gap: 11px; padding: 0 8px 24px; }
 .cc-sidebar .role-badge { margin: 0 8px 22px; }
@@ -187,18 +189,13 @@
   position: relative;
 }
 .cc-nav a svg { width: 19px; height: 19px; flex-shrink: 0; }
-.cc-nav a:hover { background: var(--surface-tint); color: var(--ink); }
-.cc-nav a.active { background: var(--teal); color: #fff; }
-.cc-nav a.active::after {
-  content: '';
-  position: absolute;
-  left: -18px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 3px;
-  height: 18px;
-  background: var(--pulse);
-  border-radius: 0 3px 3px 0;
+.cc-nav a:hover { background: rgba(255,255,255,0.03); color: #ffffff; }
+.cc-nav a.active {
+  background: rgba(204,167,90,0.08);
+  color: var(--teal);
+  border-left: 3px solid var(--teal);
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
 }
 
 .cc-sidebar-foot {
@@ -211,7 +208,7 @@
   align-items: center;
   gap: 12px;
   padding: 11px 12px;
-  color: var(--ink-faint);
+  color: var(--ink-soft);
   font-size: 14px;
   font-weight: 500;
   text-decoration: none;
@@ -219,7 +216,7 @@
   transition: color 0.15s ease, background 0.15s ease;
 }
 .cc-sidebar-foot a svg { width: 18px; height: 18px; }
-.cc-sidebar-foot a:hover { color: var(--pulse); background: var(--pulse-tint); }
+.cc-sidebar-foot a:hover { color: var(--teal); background: rgba(204,167,90,0.08); }
 
 /* --- Profile chip --- */
 .profile-chip {
@@ -269,7 +266,8 @@
 
 /* --- Hero welcome banner --- */
 .hero {
-  background: var(--ink);
+  background: var(--surface);
+  border: 1px solid rgba(204, 167, 90, 0.15);
   border-radius: 20px;
   padding: 34px 38px;
   position: relative;
@@ -285,8 +283,8 @@
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(420px 220px at 88% -20%, rgba(225,88,63,.22), transparent 70%),
-    radial-gradient(360px 220px at 100% 120%, rgba(14,110,92,.35), transparent 70%);
+    radial-gradient(420px 220px at 88% -20%, rgba(204,167,90,0.06), transparent 70%),
+    radial-gradient(360px 220px at 100% 120%, rgba(11,19,41,0.5), transparent 70%);
 }
 .hero-left { position: relative; z-index: 2; }
 .hero-eyebrow {
@@ -294,8 +292,8 @@
   align-items: center;
   gap: 8px;
   font-size: 13px;
-  color: #9FCABF;
-  font-weight: 500;
+  color: var(--teal);
+  font-weight: 600;
   margin-bottom: 10px;
 }
 .hero-eyebrow svg { width: 16px; height: 16px; }
@@ -306,14 +304,14 @@
   margin: 0 0 4px;
   letter-spacing: -0.01em;
 }
-.hero > .hero-left > p { margin: 0 0 22px; color: #B8D3CC; font-size: 14.5px; max-width: 380px; }
+.hero > .hero-left > p { margin: 0 0 22px; color: var(--ink-soft); font-size: 14.5px; max-width: 380px; }
 .hero-pills { display: flex; gap: 12px; flex-wrap: wrap; }
 .hero-pill {
   display: flex;
   align-items: center;
   gap: 12px;
-  background: rgba(255,255,255,.08);
-  border: 1px solid rgba(255,255,255,.14);
+  background: rgba(255,255,255,.03);
+  border: 1px solid rgba(204, 167, 90, 0.12);
   border-radius: 14px;
   padding: 12px 18px;
 }
@@ -321,11 +319,12 @@
   width: 34px;
   height: 34px;
   border-radius: 10px;
-  background: rgba(255,255,255,.14);
+  background: rgba(204, 167, 90, 0.1);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  color: var(--teal);
 }
 .hero-pill .ic svg { width: 17px; height: 17px; }
 .hero-pill .num {
@@ -333,8 +332,9 @@
   font-size: 20px;
   font-weight: 600;
   line-height: 1;
+  color: var(--teal);
 }
-.hero-pill .lbl { font-size: 11.5px; color: #B8D3CC; margin-top: 3px; }
+.hero-pill .lbl { font-size: 11.5px; color: var(--ink-soft); margin-top: 3px; }
 .hero-art {
   position: relative;
   z-index: 2;
@@ -349,6 +349,8 @@
 .tile-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
 .tile {
   border-radius: var(--radius-card);
+  border: 1px solid rgba(204, 167, 90, 0.15);
+  background: var(--surface);
   padding: 22px;
   color: #fff;
   position: relative;
@@ -362,21 +364,22 @@
   width: 34px;
   height: 34px;
   border-radius: 10px;
-  background: rgba(255,255,255,.18);
+  background: rgba(204, 167, 90, 0.1);
   display: flex;
   align-items: center;
   justify-content: center;
+  color: var(--teal);
 }
 .tile .ic svg { width: 17px; height: 17px; }
-.tile .num { font-family: var(--font-mono); font-size: 30px; font-weight: 600; line-height: 1; margin-top: 14px; }
-.tile .lbl { font-size: 12.5px; margin-top: 4px; opacity: 0.85; }
-.tile.t-teal  { background: var(--teal); }
-.tile.t-pulse { background: var(--pulse); }
-.tile.t-amber { background: #B8863F; }
+.tile .num { font-family: var(--font-mono); font-size: 30px; font-weight: 600; line-height: 1; margin-top: 14px; color: var(--teal); }
+.tile .lbl { font-size: 12.5px; margin-top: 4px; color: var(--ink-soft); }
+.tile.t-teal  { background: var(--surface); }
+.tile.t-pulse { background: var(--surface); }
+.tile.t-amber { background: var(--surface); }
 .tile .skeleton-num {
   width: 48px;
   height: 30px;
-  background: rgba(255,255,255,.25);
+  background: rgba(255,255,255,.05);
   border-radius: 6px;
   margin-top: 14px;
   animation: skeleton-pulse 1.4s ease-in-out infinite;
@@ -591,12 +594,12 @@
 .btn-cc-primary {
   width: 100%;
   background: var(--teal);
-  color: #fff;
+  color: #050811;
   border: none;
   border-radius: var(--radius-ctrl);
-  padding: 15px 20px;
+  padding: 11px 20px;
   font-family: var(--font-body);
-  font-size: 15px;
+  font-size: 14.5px;
   font-weight: 600;
   cursor: pointer;
   display: flex;
@@ -744,7 +747,8 @@
     color: var(--pulse-deep);
   }
   .card {
-    @apply bg-white rounded-2xl shadow-sm border p-6;
+    @apply rounded-2xl shadow-sm border p-6;
+    background: var(--surface);
     border-color: var(--line);
   }
   .input {
@@ -774,4 +778,27 @@
     background: var(--pulse-tint);
     color: var(--pulse-deep);
   }
+}
+
+/* --- Premium custom scrollbars --- */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(204, 167, 90, 0.15);
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.02);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(204, 167, 90, 0.3);
+}
+
+/* Firefox scrollbar support */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(204, 167, 90, 0.15) var(--bg);
 }

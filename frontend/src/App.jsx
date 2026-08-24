@@ -3,9 +3,8 @@ import { AuthProvider } from './context/AuthContext'
 import { ToastProvider } from './components/Toast'
 import ProtectedRoute from './components/ProtectedRoute'
 
-// Auth pages
-import Login from './pages/auth/Login'
-import Signup from './pages/auth/Signup'
+// Public pages
+import Home from './pages/Home'
 
 // Patient pages
 import Dashboard from './pages/patient/Dashboard'
@@ -29,8 +28,9 @@ export default function App() {
         <ToastProvider>
           <Routes>
             {/* Public routes */}
-            <Route path="/login" element={<Login />} />
-            <Route path="/signup" element={<Signup />} />
+            <Route path="/" element={<Home />} />
+            <Route path="/login" element={<Home defaultTab="signin" />} />
+            <Route path="/signup" element={<Home defaultTab="signup" />} />
 
             {/* Patient routes */}
             <Route path="/dashboard" element={
@@ -86,7 +86,7 @@ export default function App() {
             } />
 
             {/* Default redirect */}
-            <Route path="*" element={<Navigate to="/login" replace />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </ToastProvider>
       </AuthProvider>

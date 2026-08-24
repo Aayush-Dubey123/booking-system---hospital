@@ -76,35 +76,35 @@ export default function ChatBot() {
 
   return (
     <Layout>
-      <div style={{ display: 'flex', flexDirection: 'column', height: '100%', maxWidth: '800px', margin: '0 auto', border: '1px solid #e2e8f0', borderRadius: '8px', overflow: 'hidden', backgroundColor: '#fff' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100%', maxWidth: '800px', margin: '0 auto', border: '1px solid var(--line)', borderRadius: '8px', overflow: 'hidden', backgroundColor: 'var(--surface)' }}>
         
         {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', borderBottom: '1px solid #e2e8f0', backgroundColor: '#f8fafc' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', borderBottom: '1px solid var(--line)', backgroundColor: 'var(--surface-tint)' }}>
           <div>
-            <h2 style={{ margin: 0, fontSize: '18px', fontWeight: '600', color: '#1e293b' }}>AI Appointment Assistant</h2>
-            <p style={{ margin: 0, fontSize: '13px', color: '#64748b' }}>Powered by Gemini</p>
+            <h2 style={{ margin: 0, fontSize: '18px', fontWeight: '600', color: 'var(--ink)' }}>AI Appointment Assistant</h2>
+            <p style={{ margin: 0, fontSize: '13px', color: 'var(--ink-soft)' }}>Powered by Gemini</p>
           </div>
-          <button onClick={clearChat} style={{ background: 'transparent', border: '1px solid #cbd5e1', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '13px', color: '#475569' }}>
+          <button onClick={clearChat} style={{ background: 'transparent', border: '1px solid var(--line-strong)', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '13px', color: 'var(--teal)' }}>
             Clear Chat
           </button>
         </div>
 
         {/* Message Area */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '20px', backgroundColor: '#fcfcfc', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <div style={{ flex: 1, overflowY: 'auto', padding: '20px', backgroundColor: 'var(--bg)', display: 'flex', flexDirection: 'column', gap: '16px' }}>
           {messages.map((msg, idx) => {
             const isBot = msg.role === 'bot'
             return (
               <div key={idx} style={{ display: 'flex', flexDirection: isBot ? 'row' : 'row-reverse', alignItems: 'flex-start', gap: '12px' }}>
-                <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: isBot ? '#0E6E5C' : '#334155', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 'bold', flexShrink: 0 }}>
+                <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: isBot ? 'var(--teal)' : 'var(--surface-tint)', color: isBot ? '#050811' : 'var(--ink)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 'bold', flexShrink: 0, border: isBot ? 'none' : '1px solid var(--line)' }}>
                   {isBot ? 'AI' : 'You'}
                 </div>
                 <div style={{ maxWidth: '75%', display: 'flex', flexDirection: 'column', alignItems: isBot ? 'flex-start' : 'flex-end', gap: '4px' }}>
                   <div style={{
                     padding: '12px 16px',
                     borderRadius: '6px',
-                    backgroundColor: isBot ? '#f1f5f9' : '#0E6E5C',
-                    color: isBot ? '#1e293b' : '#ffffff',
-                    border: isBot ? '1px solid #e2e8f0' : 'none',
+                    backgroundColor: isBot ? 'var(--surface-tint)' : 'var(--teal)',
+                    color: isBot ? 'var(--ink)' : '#050811',
+                    border: isBot ? '1px solid var(--line)' : 'none',
                     fontSize: '14px',
                     lineHeight: '1.5',
                     whiteSpace: 'pre-wrap',
@@ -112,7 +112,7 @@ export default function ChatBot() {
                   }}>
                     {msg.text}
                   </div>
-                  <span style={{ fontSize: '11px', color: '#94a3b8' }}>{fmtTime(msg.ts)}</span>
+                  <span style={{ fontSize: '11px', color: 'var(--ink-soft)' }}>{fmtTime(msg.ts)}</span>
                 </div>
               </div>
             )
@@ -121,8 +121,8 @@ export default function ChatBot() {
           {/* Subtle Typing Indicator */}
           {isTyping && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: '#0E6E5C', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 'bold' }}>AI</div>
-              <div style={{ padding: '8px 12px', borderRadius: '6px', backgroundColor: '#f1f5f9', border: '1px solid #e2e8f0', fontSize: '13px', color: '#64748b' }}>
+              <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: 'var(--teal)', color: '#050811', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 'bold' }}>AI</div>
+              <div style={{ padding: '8px 12px', borderRadius: '6px', backgroundColor: 'var(--surface-tint)', border: '1px solid var(--line)', fontSize: '13px', color: 'var(--ink-soft)' }}>
                 Typing...
               </div>
             </div>
@@ -132,7 +132,7 @@ export default function ChatBot() {
         </div>
 
         {/* Input Area */}
-        <div style={{ padding: '16px', borderTop: '1px solid #e2e8f0', backgroundColor: '#fff', display: 'flex', gap: '12px' }}>
+        <div style={{ padding: '16px', borderTop: '1px solid var(--line)', backgroundColor: 'var(--surface)', display: 'flex', gap: '12px' }}>
           <textarea
             ref={inputRef}
             value={input}
@@ -143,13 +143,15 @@ export default function ChatBot() {
               flex: 1,
               resize: 'none',
               padding: '12px',
-              border: '1px solid #cbd5e1',
+              border: '1px solid var(--line-strong)',
               borderRadius: '4px',
               fontFamily: 'inherit',
               fontSize: '14px',
               height: '48px',
               maxHeight: '120px',
               outline: 'none',
+              backgroundColor: 'var(--surface-tint)',
+              color: 'var(--ink)',
             }}
           />
           <button
@@ -157,8 +159,8 @@ export default function ChatBot() {
             disabled={!input.trim() || isTyping}
             style={{
               padding: '0 20px',
-              backgroundColor: '#0E6E5C',
-              color: '#fff',
+              backgroundColor: 'var(--teal)',
+              color: '#050811',
               border: 'none',
               borderRadius: '4px',
               fontWeight: '600',
