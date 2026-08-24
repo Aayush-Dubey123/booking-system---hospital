@@ -1,0 +1,35 @@
+# Chatbot Module Dependencies
+# Install with: pip install -r chatbot/requirements.txt
+
+# Core LLM & AI
+google-genai>=0.4.0          # Google Gemini API
+
+# HTTP & Async
+httpx>=0.24.0               # HTTP client for Ollama embeddings
+aiohttp>=3.8.0              # Async HTTP client
+
+# Authentication & Security
+python-jose[cryptography]>=3.3.0  # JWT handling
+cryptography>=41.0.0        # Encryption support
+
+# Configuration & Environment
+python-dotenv>=1.0.0        # Environment variable management
+
+# Data Validation & Serialization
+pydantic>=2.0.0             # Data validation
+pydantic-settings>=2.0.0    # Settings management
+
+# Web Framework (for routes)
+fastapi>=0.100.0            # FastAPI framework
+starlette>=0.27.0           # ASGI toolkit
+
+# Database (if using MongoDB directly)
+pymongo>=4.4.0              # MongoDB driver
+motor>=3.2.0                # Async MongoDB driver (optional)
+
+# Logging & Monitoring
+python-json-logger>=2.0.7   # JSON logging (optional)
+
+# Development & Testing (optional)
+pytest>=7.4.0               # Testing framework
+pytest-asyncio>=0.21.0      # Async testing support
