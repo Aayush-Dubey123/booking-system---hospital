@@ -1,6 +1,21 @@
 import logging
 import sys
 
+# Reconfigure stdout and stderr streams to use UTF-8.
+# This prevents UnicodeEncodeError ('charmap' codec can't encode character) on Windows
+# when logging or printing emojis/unicode characters (such as \U0001f449).
+if hasattr(sys.stdout, "reconfigure"):
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")
+    except Exception:
+        pass
+
+if hasattr(sys.stderr, "reconfigure"):
+    try:
+        sys.stderr.reconfigure(encoding="utf-8")
+    except Exception:
+        pass
+
 
 def logger(name: str) -> logging.Logger:
     log = logging.getLogger(name)
@@ -18,3 +33,4 @@ def logger(name: str) -> logging.Logger:
         log.setLevel(logging.DEBUG)
 
     return log
+

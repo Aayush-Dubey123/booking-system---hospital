@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import Sidebar from './Sidebar'
-import { Menu } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
 
 function getInitials(name) {
