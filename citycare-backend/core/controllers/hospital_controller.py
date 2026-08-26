@@ -1,10 +1,15 @@
 from fastapi import HTTPException, status
-
+# pyrefly: ignore [missing-import]
 from core.cruds.hospital_crud import HospitalCRUD
+# pyrefly: ignore [missing-import]
 from core.cruds.user_crud import UserCRUD
+# pyrefly: ignore [missing-import]
 from core.cruds.appointment_crud import AppointmentCRUD
+# pyrefly: ignore [missing-import]
 from common.auth import encrypt_password
+# pyrefly: ignore [missing-import]
 from common.auth_helpers import verify_token, require_role
+# pyrefly: ignore [missing-import]
 from common.logger import logger
 
 logging = logger(__name__)
@@ -130,7 +135,7 @@ class HospitalController:
         try:
             logging.info("Calling HospitalController.get_hospital_doctors")
             payload = verify_token(authorization)
-            require_role(payload, "owner", "superadmin")
+            require_role(payload, "owner", "superadmin", "patient", "doctor")
 
             # Owner can only see their own hospital's doctors
             if payload["role"] == "owner":

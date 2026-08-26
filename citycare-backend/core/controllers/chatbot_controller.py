@@ -471,9 +471,24 @@ class ChatbotController:
                         tool_result = await mcp_client.call_tool(tool_name, args)
                         
                         # Cache token on login success
-                        if tool_name == "login" and isinstance(tool_result, dict) and "access_token" in tool_result:
-                            session["token"] = tool_result["access_token"]
-                            logging.info(f"[Telegram Agent] Cached JWT token for chat_id={chat_id}")
+                        if tool_name == "login":
+                            token = None
+                            if isinstance(tool_result, dict) and "access_token" in tool_result:
+                                token = tool_result["access_token"]
+                            elif hasattr(tool_result, "content") and isinstance(tool_result.content, list):
+                                for item in tool_result.content:
+                                    if hasattr(item, "text") and item.text:
+                                        try:
+                                            import json
+                                            data = json.loads(item.text)
+                                            if isinstance(data, dict) and "access_token" in data:
+                                                token = data["access_token"]
+                                                break
+                                        except Exception:
+                                            pass
+                            if token:
+                                session["token"] = token
+                                logging.info(f"[Telegram Agent] Cached JWT token for chat_id={chat_id}")
                             
                     except Exception as exc:
                         logging.error(f"[Telegram Agent] Error calling tool {tool_name}: {exc}")
