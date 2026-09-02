@@ -1,8 +1,10 @@
 import axios from 'axios'
 import { getToken, clearAuth } from '../utils/token'
 
+const apiBaseUrl = (import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000').replace(/\/+$/, '')
+
 const client = axios.create({
-  baseURL: 'http://127.0.0.1:8000',
+  baseURL: apiBaseUrl,
   headers: { 'Content-Type': 'application/json' },
 })
 

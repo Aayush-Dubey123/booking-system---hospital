@@ -1,0 +1,33 @@
+services:
+  - type: web
+    name: citycare-backend
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn core.apis.api:app --host 0.0.0.0 --port $PORT --app-dir citycare-backend
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: DATABASE_NAME
+        value: citycare
+      - key: algorithm
+        value: HS256
+      - key: MONGODB_URL
+        sync: false
+      - key: secret
+        sync: false
+      - key: api_key
+        sync: false
+      - key: API_KEY
+        sync: false
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: FRONTEND_URL
+        sync: false

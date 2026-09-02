@@ -1,3 +1,4 @@
+import os
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -99,9 +100,23 @@ app = FastAPI(
 )
  
 
+cors_origins = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+]
+frontend_env = os.environ.get("FRONTEND_URL", "")
+if frontend_env:
+    for origin in frontend_env.split(","):
+        origin_clean = origin.strip().rstrip("/")
+        if origin_clean and origin_clean not in cors_origins:
+            cors_origins.append(origin_clean)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=cors_origins,
+    allow_origin_regex=r"https://.*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

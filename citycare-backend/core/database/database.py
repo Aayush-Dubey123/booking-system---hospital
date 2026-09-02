@@ -5,7 +5,10 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 env_path = Path(__file__).resolve().parent.parent.parent / ".env"
-load_dotenv(dotenv_path=env_path)
+if env_path.exists():
+    load_dotenv(dotenv_path=env_path)
+else:
+    load_dotenv()
 from motor import core, motor_asyncio
 from odmantic import AIOEngine
 from pymongo.driver_info import DriverInfo
@@ -16,7 +19,7 @@ logger = logging.getLogger(__name__)
 DRIVER_INFO = DriverInfo(name="citycare-backend", version="1.0.0")
 
 MONGODB_URL = os.getenv("MONGODB_URL", "mongodb://localhost:27017")
-DATABASE_NAME = os.getenv("DATABASE_NAME", "citycare")
+DATABASE_NAME = os.getenv("DATABASE_NAME") or os.getenv("MONGODB_NAME") or "citycare"
 
 
 class _MongoClientSingleton:
