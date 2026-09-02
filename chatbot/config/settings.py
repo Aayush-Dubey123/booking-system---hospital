@@ -20,7 +20,7 @@ class ChatbotConfig:
     ALGORITHM = os.environ.get("algorithm", "HS256")
 
     # Gemini Model Configuration
-    GEMINI_MODEL = "gemini-3.5-flash-lite"
+    GEMINI_MODEL = "gemini-3.5-flash"
     GEMINI_TEMPERATURE = 0.7
 
     # RAG Configuration
