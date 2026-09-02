@@ -3,6 +3,10 @@ import { getToken, clearAuth } from '../utils/token'
 
 const apiBaseUrl = (import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000').replace(/\/+$/, '')
 
+if (typeof window !== 'undefined') {
+  console.log('[CityCare API] Target backend URL:', apiBaseUrl)
+}
+
 const client = axios.create({
   baseURL: apiBaseUrl,
   headers: { 'Content-Type': 'application/json' },
