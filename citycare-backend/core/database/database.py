@@ -9,6 +9,7 @@ if env_path.exists():
     load_dotenv(dotenv_path=env_path)
 else:
     load_dotenv()
+import certifi
 from motor import core, motor_asyncio
 from odmantic import AIOEngine
 from pymongo.driver_info import DriverInfo
@@ -30,9 +31,15 @@ class _MongoClientSingleton:
         if not hasattr(cls, "instance"):
             cls.instance = super(_MongoClientSingleton, cls).__new__(cls)
 
+            client_kwargs = {
+                "driver": DRIVER_INFO,
+            }
+            if "mongodb+srv://" in MONGODB_URL or "ssl=true" in MONGODB_URL.lower() or "tls=true" in MONGODB_URL.lower():
+                client_kwargs["tlsCAFile"] = certifi.where()
+
             cls.instance.mongo_client = motor_asyncio.AsyncIOMotorClient(
                 MONGODB_URL,
-                driver=DRIVER_INFO,
+                **client_kwargs,
             )
 
             cls.instance.engine = AIOEngine(
