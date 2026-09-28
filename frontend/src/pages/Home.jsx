@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { useToast } from '../components/Toast'
+import DemoLoginModal from '../components/DemoLoginModal'
 import {
   HeartPulse, Activity, Shield, ArrowRight, Lock, User,
   Stethoscope, Cpu, Layers, Send, CheckCircle, Sparkles,
@@ -36,87 +37,63 @@ export default function Home({ defaultTab = 'signin' }) {
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
 
-  // ── Product preview state ──────────────────────────────────
-  const [previewTab, setPreviewTab] = useState('dashboard')
-  const [chatMsg, setChatMsg] = useState('')
-  const [chatLog, setChatLog] = useState([
-    { from: 'bot', text: 'Hello John! I can help you check your medical records, review prescriptions, or look up appointment details. What would you like to know?' },
-  ])
-
-  // ── Mobile nav ────────────────────────────────────────────
-  const [mobileOpen, setMobileOpen] = useState(false)
-
-  // ── Forms (separate instances per tab to prevent bleed) ───
-  const signinForm = useForm()
-  const signupForm = useForm()
-
-  const { login, signup, isAuthenticated } = useAuth()
-  const toast = useToast()
-  const navigate = useNavigate()
-
-  // ── Helpers ───────────────────────────────────────────────
-  const getDashPath = (r) => {
-    if (r === 'doctor') return '/doctor/dashboard'
-    if (r === 'owner') return '/owner/dashboard'
-    if (r === 'superadmin') return '/admin/dashboard'
-    return '/dashboard'
-  }
-
-  const handleBook = () => {
-    if (isAuthenticated) { navigate('/book'); return }
-    scrollTo('hero')
-    setActiveTab('signin')
-    toast.info('Sign in or use a demo account to book an appointment.', 'Sign In Required')
-  }
-
-  const switchTab = (tab) => {
-    setActiveTab(tab)
-    signinForm.clearErrors()
-    signupForm.clearErrors()
-    setShowPassword(false)
-  }
-
-  // ── Login submit ──────────────────────────────────────────
-  const onSignin = async (data) => {
-    setLoading(true)
-    try {
-      const res = await login({ email: data.email, password: data.password })
-      toast.success('Welcome back!', 'Login Successful')
-      navigate(getDashPath(res.role))
-    } catch (err) {
-      toast.error(err.response?.data?.detail ?? 'Login failed. Please check your credentials.')
-    } finally { setLoading(false) }
-  }
-
-  // ── Signup submit ─────────────────────────────────────────
-  const onSignup = async (data) => {
-    setLoading(true)
-    try {
-      await signup({ first_name: data.first_name, last_name: data.last_name, email: data.email, password: data.password })
-      const res = await login({ email: data.email, password: data.password })
-      toast.success('Account created! Welcome to CityCare.', 'Welcome')
-      navigate(getDashPath(res.role))
-    } catch (err) {
-      toast.error(err.response?.data?.detail ?? 'Sign-up failed. Please try again.')
-    } finally { setLoading(false) }
-  }
+  // ── Demo login modal state ─────────────────────────────────
+  const [demoModal, setDemoModal] = useState({
+    isOpen: false,
+    roleType: null,
+    roleTitle: '',
+    status: 'connecting',
+    errorMessage: null,
+  })
 
   // ── Demo login ────────────────────────────────────────────
   const demoLogin = async (roleType) => {
-    const creds = {
-      patient: { email: 'patient1@example.com',      password: 'password123' },
-      doctor:  { email: 'doctor1@example.com',        password: 'pass-ADAYUSH1' },
-      admin:   { email: 'superadmin@citycare.com',    password: 'admin1234' },
-    }[roleType]
-    if (!creds) return
+    const credsMap = {
+      patient: { email: 'patient1@example.com',   password: 'password123',   title: 'Patient' },
+      doctor:  { email: 'doctor1@example.com',     password: 'pass-ADAYUSH1', title: 'Doctor' },
+      admin:   { email: 'superadmin@citycare.com', password: 'admin1234',     title: 'Admin' },
+    }
+    const target = credsMap[roleType]
+    if (!target) return
+
+    setDemoModal({
+      isOpen: true,
+      roleType,
+      roleTitle: target.title,
+      status: 'connecting',
+      errorMessage: null,
+    })
     setLoading(true)
+
     try {
-      const res = await login(creds)
-      toast.success(`Signed in as ${roleType}.`, 'Demo Access Granted')
-      navigate(getDashPath(res.role))
+      const res = await login({ email: target.email, password: target.password })
+      setDemoModal(prev => ({ ...prev, status: 'success' }))
+      toast.success(`Signed in as ${target.title}.`, 'Demo Access Granted')
+      setTimeout(() => {
+        setDemoModal(prev => ({ ...prev, isOpen: false }))
+        navigate(getDashPath(res.role))
+      }, 750)
     } catch (err) {
-      toast.error(err.response?.data?.detail ?? `Could not sign in as ${roleType}.`)
-    } finally { setLoading(false) }
+      const detail = err.response?.data?.detail ?? err.message ?? `Could not sign in as ${target.title}.`
+      setDemoModal(prev => ({
+        ...prev,
+        status: 'error',
+        errorMessage: detail,
+      }))
+      toast.error(detail, 'Demo Login Failed')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleRetryDemo = () => {
+    if (demoModal.roleType) {
+      demoLogin(demoModal.roleType)
+    }
+  }
+
+  const handleCloseDemoModal = () => {
+    setDemoModal(prev => ({ ...prev, isOpen: false }))
   }
 
   // ── Preview chat ──────────────────────────────────────────
@@ -1156,6 +1133,16 @@ export default function Home({ defaultTab = 'signin' }) {
           </p>
         </div>
       </footer>
+
+      {/* ── Demo Login Cold-Start Overlay Modal ──────── */}
+      <DemoLoginModal
+        isOpen={demoModal.isOpen}
+        roleTitle={demoModal.roleTitle}
+        status={demoModal.status}
+        errorMessage={demoModal.errorMessage}
+        onRetry={handleRetryDemo}
+        onClose={handleCloseDemoModal}
+      />
 
     </div>
   )
