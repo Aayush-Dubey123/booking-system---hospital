@@ -37,6 +37,71 @@ export default function Home({ defaultTab = 'signin' }) {
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
 
+  // ── Product preview state ──────────────────────────────────
+  const [previewTab, setPreviewTab] = useState('dashboard')
+  const [chatMsg, setChatMsg] = useState('')
+  const [chatLog, setChatLog] = useState([
+    { from: 'bot', text: 'Hello John! I can help you check your medical records, review prescriptions, or look up appointment details. What would you like to know?' },
+  ])
+
+  // ── Mobile nav ────────────────────────────────────────────
+  const [mobileOpen, setMobileOpen] = useState(false)
+
+  // ── Forms (separate instances per tab to prevent bleed) ───
+  const signinForm = useForm()
+  const signupForm = useForm()
+
+  const { login, signup, isAuthenticated } = useAuth()
+  const toast = useToast()
+  const navigate = useNavigate()
+
+  // ── Helpers ───────────────────────────────────────────────
+  const getDashPath = (r) => {
+    if (r === 'doctor') return '/doctor/dashboard'
+    if (r === 'owner') return '/owner/dashboard'
+    if (r === 'superadmin') return '/admin/dashboard'
+    return '/dashboard'
+  }
+
+  const handleBook = () => {
+    if (isAuthenticated) { navigate('/book'); return }
+    scrollTo('hero')
+    setActiveTab('signin')
+    toast.info('Sign in or use a demo account to book an appointment.', 'Sign In Required')
+  }
+
+  const switchTab = (tab) => {
+    setActiveTab(tab)
+    signinForm.clearErrors()
+    signupForm.clearErrors()
+    setShowPassword(false)
+  }
+
+  // ── Login submit ──────────────────────────────────────────
+  const onSignin = async (data) => {
+    setLoading(true)
+    try {
+      const res = await login({ email: data.email, password: data.password })
+      toast.success('Welcome back!', 'Login Successful')
+      navigate(getDashPath(res.role))
+    } catch (err) {
+      toast.error(err.response?.data?.detail ?? 'Login failed. Please check your credentials.')
+    } finally { setLoading(false) }
+  }
+
+  // ── Signup submit ─────────────────────────────────────────
+  const onSignup = async (data) => {
+    setLoading(true)
+    try {
+      await signup({ first_name: data.first_name, last_name: data.last_name, email: data.email, password: data.password })
+      const res = await login({ email: data.email, password: data.password })
+      toast.success('Account created! Welcome to CityCare.', 'Welcome')
+      navigate(getDashPath(res.role))
+    } catch (err) {
+      toast.error(err.response?.data?.detail ?? 'Sign-up failed. Please try again.')
+    } finally { setLoading(false) }
+  }
+
   // ── Demo login modal state ─────────────────────────────────
   const [demoModal, setDemoModal] = useState({
     isOpen: false,
